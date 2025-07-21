@@ -7,6 +7,7 @@ import {
   BarChart,
   Upload,
   Image,
+  Package,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ interface SidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { name: "Create Campaign", href: "/create-campaign", icon: PlusCircle },
+  { name: "Product Management", href: "/product-management", icon: Package },
   { name: "Social Media", href: "/social-media", icon: Share2 },
   { name: "Statistics", href: "/statistics", icon: BarChart },
   { name: "Template Upload", href: "/template-upload", icon: Upload },
@@ -37,15 +39,15 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           
           return (
             <Link key={item.name} href={item.href}>
-              <a className={cn(
-                "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-colors",
+              <div className={cn(
+                "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-colors cursor-pointer",
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-gray-700 hover:bg-gray-50"
               )}>
                 <Icon className="w-5 h-5" />
                 {!collapsed && <span>{item.name}</span>}
-              </a>
+              </div>
             </Link>
           );
         })}

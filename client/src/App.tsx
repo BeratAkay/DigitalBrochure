@@ -8,6 +8,7 @@ import LoginPage from "@/pages/login";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import Dashboard from "@/pages/dashboard";
 import CreateCampaign from "@/pages/create-campaign";
+import ProductManagement from "@/pages/product-management";
 import TemplateUpload from "@/pages/template-upload";
 import LogoUpload from "@/pages/logo-upload";
 import SocialMedia from "@/pages/social-media";
@@ -27,6 +28,7 @@ function AppRouter() {
         <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/create-campaign" component={CreateCampaign} />
+        <Route path="/product-management" component={ProductManagement} />
         <Route path="/template-upload" component={TemplateUpload} />
         <Route path="/logo-upload" component={LogoUpload} />
         <Route path="/social-media" component={SocialMedia} />

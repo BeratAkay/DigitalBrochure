@@ -121,6 +121,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/products", upload.single("image"), async (req, res) => {
+    try {
+      const { name, description, originalPrice, category } = req.body;
+      
+      const productData = {
+        name,
+        description: description || null,
+        originalPrice: parseFloat(originalPrice),
+        category,
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      };
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.patch("/api/products/:id", upload.single("image"), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, description, originalPrice, category } = req.body;
+      
+      const updates: any = {};
+      if (name) updates.name = name;
+      if (description !== undefined) updates.description = description || null;
+      if (originalPrice) updates.originalPrice = parseFloat(originalPrice);
+      if (category) updates.category = category;
+      if (req.file) updates.imageUrl = `/uploads/${req.file.filename}`;
+      
+      const product = await storage.updateProduct(id, updates);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProduct(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
   // Campaign Products
   app.get("/api/campaigns/:campaignId/products", async (req, res) => {
     try {

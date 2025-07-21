@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Download, Building } from "lucide-react";
-import type { Product, CampaignProduct } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Eye, Download, Building, CalendarIcon, Image } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { Product, CampaignProduct, Template, Logo } from "@shared/schema";
 
 interface BrochureEditorProps {
   selectedProducts: (CampaignProduct & { product: Product })[];
@@ -10,28 +18,75 @@ interface BrochureEditorProps {
   onCampaignUpdate: (campaign: any) => void;
 }
 
-const templates = [
-  { id: 1, name: "Modern Gradient", gradient: "template-gradient-1" },
-  { id: 2, name: "Fresh Green", gradient: "template-gradient-2" },
-  { id: 3, name: "Warm Sunset", gradient: "template-gradient-3" },
-  { id: 4, name: "Professional", gradient: "template-gradient-4" },
-];
-
 export default function BrochureEditor({
   selectedProducts,
   campaign,
   onCampaignUpdate,
 }: BrochureEditorProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState(1);
+  const { user } = useAuth();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [selectedLogoId, setSelectedLogoId] = useState<number | null>(null);
   const [companyName, setCompanyName] = useState("Your Company Name");
-  const [validUntil, setValidUntil] = useState("Dec 31, 2023");
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  const [elementPositions, setElementPositions] = useState({
+    logo: { x: 32, y: 32 },
+    companyName: { x: 112, y: 32 },
+    dateRange: { x: 450, y: 32 },
+  });
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ["/api/templates", { userId: user?.id }],
+    enabled: !!user,
+  });
+
+  const { data: logos = [] } = useQuery<Logo[]>({
+    queryKey: ["/api/logos", { userId: user?.id }],
+    enabled: !!user,
+  });
+
+  const { data: activeLogo } = useQuery<Logo | null>({
+    queryKey: ["/api/logos/active", { userId: user?.id }],
+    enabled: !!user,
+  });
+
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  const selectedLogo = logos.find(l => l.id === selectedLogoId) || activeLogo;
+
+  const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setDraggedElement(elementType);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!draggedElement || !canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setElementPositions(prev => ({
+      ...prev,
+      [draggedElement]: { x: Math.max(0, x - 25), y: Math.max(0, y - 25) }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setDraggedElement(null);
+  };
 
   const handleGeneratePDF = async () => {
-    // In a real implementation, this would call the backend API to generate PDF
     alert("PDF generation would be implemented here");
   };
 
-  const selectedTemplateData = templates.find(t => t.id === selectedTemplate);
+  const formatDateRange = () => {
+    if (!startDate && !endDate) return "Select dates";
+    if (startDate && !endDate) return `From ${format(startDate, "MMM dd, yyyy")}`;
+    if (!startDate && endDate) return `Until ${format(endDate, "MMM dd, yyyy")}`;
+    return `${format(startDate!, "MMM dd")} - ${format(endDate!, "MMM dd, yyyy")}`;
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -54,6 +109,44 @@ export default function BrochureEditor({
       <div className="flex-1 p-6 overflow-y-auto">
         {/* Campaign Settings */}
         <div className="mb-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Choose Template
+              </label>
+              <Select value={selectedTemplateId?.toString()} onValueChange={(value) => setSelectedTemplateId(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id.toString()}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Choose Logo
+              </label>
+              <Select value={selectedLogoId?.toString() || activeLogo?.id?.toString()} onValueChange={(value) => setSelectedLogoId(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a logo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {logos.map((logo) => (
+                    <SelectItem key={logo.id} value={logo.id.toString()}>
+                      {logo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Company Name
@@ -64,43 +157,121 @@ export default function BrochureEditor({
               placeholder="Enter company name"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valid Until
-            </label>
-            <Input
-              value={validUntil}
-              onChange={(e) => setValidUntil(e.target.value)}
-              placeholder="Enter validity date"
-            />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "MMM dd, yyyy") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "MMM dd, yyyy") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
         {/* Brochure Canvas */}
         <div className="mb-6">
           <div
-            className={`drag-drop-area border-2 border-dashed border-gray-300 rounded-xl relative mx-auto ${selectedTemplateData?.gradient}`}
-            style={{ width: "600px", height: "800px" }}
+            ref={canvasRef}
+            className="drag-drop-area border-2 border-dashed border-gray-300 rounded-xl relative mx-auto bg-gradient-to-br from-blue-400 to-purple-600"
+            style={{ 
+              width: "600px", 
+              height: "800px",
+              backgroundImage: selectedTemplate ? `url(${selectedTemplate.thumbnailPath})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             {/* Company Logo */}
-            <div className="absolute top-8 left-8 draggable-element cursor-move">
+            <div 
+              className="absolute draggable-element cursor-move user-select-none"
+              style={{ left: elementPositions.logo.x, top: elementPositions.logo.y }}
+              onMouseDown={(e) => handleMouseDown('logo', e)}
+            >
               <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                <Building className="w-8 h-8 text-gray-400" />
+                {selectedLogo ? (
+                  <img 
+                    src={selectedLogo.filePath} 
+                    alt="Company Logo" 
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                ) : (
+                  <Building className="w-8 h-8 text-gray-400" />
+                )}
               </div>
             </div>
 
             {/* Company Name */}
-            <div className="absolute top-8 left-28 draggable-element cursor-move">
+            <div 
+              className="absolute draggable-element cursor-move user-select-none"
+              style={{ left: elementPositions.companyName.x, top: elementPositions.companyName.y }}
+              onMouseDown={(e) => handleMouseDown('companyName', e)}
+            >
               <h1 className="text-2xl font-bold text-white drop-shadow-lg">
                 {companyName}
               </h1>
             </div>
 
-            {/* Campaign Date */}
-            <div className="absolute top-8 right-8 draggable-element cursor-move">
+            {/* Campaign Date Range */}
+            <div 
+              className="absolute draggable-element cursor-move user-select-none"
+              style={{ left: elementPositions.dateRange.x, top: elementPositions.dateRange.y }}
+              onMouseDown={(e) => handleMouseDown('dateRange', e)}
+            >
               <div className="bg-white bg-opacity-90 px-4 py-2 rounded-lg">
                 <span className="text-sm font-semibold text-gray-900">
-                  Valid until {validUntil}
+                  {formatDateRange()}
                 </span>
               </div>
             </div>
@@ -160,28 +331,7 @@ export default function BrochureEditor({
           </div>
         </div>
 
-        {/* Template Selection */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Template</h3>
-          <div className="grid grid-cols-4 gap-4">
-            {templates.map((template) => (
-              <div
-                key={template.id}
-                onClick={() => setSelectedTemplate(template.id)}
-                className={`border-2 rounded-lg p-2 cursor-pointer transition-colors ${
-                  selectedTemplate === template.id
-                    ? "border-primary"
-                    : "border-gray-300 hover:border-primary/50"
-                }`}
-              >
-                <div className={`w-full h-24 rounded ${template.gradient}`}></div>
-                <p className="text-xs text-center mt-2 font-medium">
-                  {template.name}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
     </div>
   );
