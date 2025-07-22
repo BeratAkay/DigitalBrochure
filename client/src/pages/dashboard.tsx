@@ -19,9 +19,14 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns", user?.id],
+    queryKey: ["/api/campaigns"],
+    queryFn: async () => {
+      const response = await fetch(`/api/campaigns?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user,
-    select: (data) => Array.isArray(data) ? data : [],
   });
 
   const { data: stats } = useQuery<{
@@ -30,7 +35,12 @@ export default function Dashboard() {
     totalTemplates: number;
     totalDownloads: number;
   }>({
-    queryKey: ["/api/statistics", user?.id],
+    queryKey: ["/api/statistics"],
+    queryFn: async () => {
+      const response = await fetch(`/api/statistics?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch statistics');
+      return response.json();
+    },
     enabled: !!user,
   });
 
