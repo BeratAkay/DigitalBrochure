@@ -17,12 +17,12 @@ export default function LogoUpload() {
   const [logoName, setLogoName] = useState("");
 
   const { data: logos = [], isLoading } = useQuery<Logo[]>({
-    queryKey: ["/api/logos", { userId: user?.id }],
+    queryKey: ["/api/logos", user?.id],
     enabled: !!user,
   });
 
   const { data: activeLogo } = useQuery<Logo | null>({
-    queryKey: ["/api/logos/active", { userId: user?.id }],
+    queryKey: ["/api/logos/active", user?.id],
     enabled: !!user,
   });
 

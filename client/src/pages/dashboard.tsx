@@ -19,8 +19,9 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns", { userId: user?.id }],
+    queryKey: ["/api/campaigns", user?.id],
     enabled: !!user,
+    select: (data) => Array.isArray(data) ? data : [],
   });
 
   const { data: stats } = useQuery<{
@@ -29,7 +30,7 @@ export default function Dashboard() {
     totalTemplates: number;
     totalDownloads: number;
   }>({
-    queryKey: ["/api/statistics", { userId: user?.id }],
+    queryKey: ["/api/statistics", user?.id],
     enabled: !!user,
   });
 

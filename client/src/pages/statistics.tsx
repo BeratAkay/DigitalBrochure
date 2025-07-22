@@ -12,7 +12,7 @@ export default function Statistics() {
     totalTemplates: number;
     totalDownloads: number;
   }>({
-    queryKey: ["/api/statistics", { userId: user?.id }],
+    queryKey: ["/api/statistics", user?.id],
     enabled: !!user,
   });
 

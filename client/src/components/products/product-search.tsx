@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -10,11 +11,13 @@ interface ProductSearchProps {
 }
 
 export default function ProductSearch({ onProductSelect }: ProductSearchProps) {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { search: search || undefined, category: category !== "all" ? category : undefined }],
+    queryKey: ["/api/products", user?.id, { search: search || undefined, category: category !== "all" ? category : undefined }],
+    enabled: !!user,
   });
 
   const categories = [

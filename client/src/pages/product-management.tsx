@@ -29,7 +29,7 @@ export default function ProductManagement() {
   });
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { userId: user?.id }],
+    queryKey: ["/api/products", user?.id],
     enabled: !!user,
   });
 

@@ -20,7 +20,7 @@ export default function TemplateUpload() {
   const [templateDescription, setTemplateDescription] = useState("");
 
   const { data: templates = [], isLoading } = useQuery<Template[]>({
-    queryKey: ["/api/templates", { userId: user?.id }],
+    queryKey: ["/api/templates", user?.id],
     enabled: !!user,
   });
 
