@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { loginSchema, insertCampaignSchema, insertCampaignProductSchema } from "@shared/schema";
@@ -22,9 +21,6 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve uploaded files statically
-  app.use('/uploads', express.static(uploadDir));
-
   // Authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
