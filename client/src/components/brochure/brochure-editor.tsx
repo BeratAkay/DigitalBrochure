@@ -33,6 +33,8 @@ export default function BrochureEditor({
   const [endDate, setEndDate] = useState<Date>();
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [draggedProductId, setDraggedProductId] = useState<number | null>(null);
+  const [rotatingProductId, setRotatingProductId] = useState<number | null>(null);
+  const [lastMouseAngle, setLastMouseAngle] = useState<number>(0);
   const [elementPositions, setElementPositions] = useState({
     logo: { x: 32, y: 32 },
     companyName: { x: 112, y: 32 },
@@ -133,15 +135,27 @@ export default function BrochureEditor({
     e.stopPropagation();
     setDraggedProductId(productId);
     setDraggedElement(null);
+    setRotatingProductId(null);
   };
 
-  const handleProductRotate = (productId: number, e: React.MouseEvent) => {
+  const handleProductRotateStart = (productId: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setProductRotations(prev => ({
-      ...prev,
-      [productId]: ((prev[productId] || 0) + 15) % 360
-    }));
+    setRotatingProductId(productId);
+    setDraggedProductId(null);
+    setDraggedElement(null);
+    
+    // Calculate initial angle from product center
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const productPos = productPositions[productId] || { x: 0, y: 0 };
+      const centerX = productPos.x + 66; // Half of product width (132px)
+      const centerY = productPos.y + 66; // Half of product height (132px)
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const angle = Math.atan2(mouseY - centerY, mouseX - centerX) * (180 / Math.PI);
+      setLastMouseAngle(angle);
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -162,10 +176,25 @@ export default function BrochureEditor({
       setProductPositions(prev => ({
         ...prev,
         [draggedProductId]: { 
-          x: Math.max(0, Math.min(x - 80, 600 - 160)), // Keep within canvas bounds (160px is product width)
-          y: Math.max(0, Math.min(y - 80, 800 - 160))  // Keep within canvas bounds (160px is product height)
+          x: Math.max(0, Math.min(x - 66, 600 - 132)), // Keep within canvas bounds (132px is product width)
+          y: Math.max(0, Math.min(y - 66, 800 - 180))  // Keep within canvas bounds (180px including text)
         }
       }));
+    }
+    
+    if (rotatingProductId) {
+      const productPos = productPositions[rotatingProductId] || { x: 0, y: 0 };
+      const centerX = productPos.x + 66; // Half of product width
+      const centerY = productPos.y + 66; // Half of product height
+      const currentAngle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+      const angleDifference = currentAngle - lastMouseAngle;
+      
+      setProductRotations(prev => ({
+        ...prev,
+        [rotatingProductId]: (prev[rotatingProductId] || 0) + angleDifference
+      }));
+      
+      setLastMouseAngle(currentAngle);
     }
   };
 
@@ -178,6 +207,7 @@ export default function BrochureEditor({
     
     setDraggedElement(null);
     setDraggedProductId(null);
+    setRotatingProductId(null);
   };
 
   const handleGeneratePDF = async () => {
@@ -397,68 +427,79 @@ export default function BrochureEditor({
               const position = productPositions[item.id] || { x: 0, y: 0 };
               const rotation = productRotations[item.id] || 0;
               const isDragging = draggedProductId === item.id;
+              const isRotating = rotatingProductId === item.id;
               
               return (
                 <div
                   key={item.id}
                   className={cn(
-                    "absolute cursor-move select-none transition-all duration-200",
-                    isDragging ? "z-10 scale-105" : "z-0 scale-100"
+                    "absolute select-none",
+                    isDragging ? "z-20" : isRotating ? "z-10" : "z-0"
                   )}
                   style={{ 
                     left: position.x, 
                     top: position.y,
-                    transform: `rotate(${rotation}deg) ${isDragging ? "scale(1.05)" : "scale(1)"}`,
-                    filter: isDragging ? "drop-shadow(0 10px 20px rgba(0,0,0,0.3))" : "drop-shadow(0 4px 8px rgba(0,0,0,0.2))"
+                    filter: isDragging ? "drop-shadow(0 8px 16px rgba(0,0,0,0.25))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
+                    transform: isDragging ? "scale(1.02)" : "scale(1)",
+                    transition: isDragging || isRotating ? "none" : "all 0.1s ease"
                   }}
-                  onMouseDown={(e) => handleProductMouseDown(item.id, e)}
                 >
                   {/* Control Buttons */}
-                  <div className="absolute -top-3 -right-3 flex space-x-1 z-20">
-                    {/* Rotate Button */}
-                    <button
-                      onClick={(e) => handleProductRotate(item.id, e)}
-                      className="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg transition-colors"
-                      title="Rotate Product"
+                  <div className="absolute -top-4 -right-4 flex space-x-1 z-30">
+                    {/* Rotate Handle */}
+                    <div
+                      onMouseDown={(e) => handleProductRotateStart(item.id, e)}
+                      className="bg-green-500 hover:bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm shadow-lg transition-colors cursor-grab active:cursor-grabbing"
+                      title="Drag to rotate product"
                     >
                       ↻
-                    </button>
-                    {/* Move Button */}
-                    <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg">
-                      <Move className="w-3 h-3" />
+                    </div>
+                    {/* Move Handle */}
+                    <div 
+                      onMouseDown={(e) => handleProductMouseDown(item.id, e)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-colors cursor-grab active:cursor-grabbing"
+                      title="Drag to move product"
+                    >
+                      <Move className="w-4 h-4" />
                     </div>
                   </div>
                   
                   {/* Main Product Container - Circular Market Style */}
                   <div className="relative">
-                    {/* Circular Product Image */}
-                    <div className="w-32 h-32 rounded-full bg-white shadow-xl border-4 border-yellow-400 flex items-center justify-center overflow-hidden relative">
+                    {/* Circular Product Image - Only this part rotates */}
+                    <div 
+                      className="w-32 h-32 rounded-full bg-white shadow-xl border-4 border-yellow-400 flex items-center justify-center overflow-hidden relative"
+                      style={{
+                        transform: `rotate(${rotation}deg)`,
+                        transition: isRotating ? "none" : "transform 0.1s ease"
+                      }}
+                    >
                       {item.product.imageUrl ? (
                         <img
                           src={item.product.imageUrl}
                           alt={item.product.name}
-                          className="w-full h-full object-cover rounded-full"
+                          className="w-full h-full object-cover"
                           draggable={false}
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-full">
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-xs font-medium">No Image</span>
-                        </div>
-                      )}
-                      
-                      {/* Discount Badge - Circular and Prominent */}
-                      {item.discountPercent > 0 && (
-                        <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-12 h-12 flex flex-col items-center justify-center text-xs font-bold border-2 border-white shadow-lg animate-pulse">
-                          <span className="text-xs leading-none">{item.discountPercent}%</span>
-                          <span className="text-xs leading-none">OFF</span>
                         </div>
                       )}
                     </div>
                     
-                    {/* Product Name - Floating below */}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 text-center">
-                      <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200">
-                        <h3 className="font-bold text-sm text-gray-900 mb-1 max-w-32 truncate">
+                    {/* Discount Badge - Fixed position, doesn't rotate */}
+                    {item.discountPercent > 0 && (
+                      <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full w-14 h-14 flex flex-col items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
+                        <span className="text-xs leading-tight">{item.discountPercent}%</span>
+                        <span className="text-xs leading-tight">OFF</span>
+                      </div>
+                    )}
+                    
+                    {/* Product Name - Fixed position, doesn't rotate */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 text-center">
+                      <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200 min-w-max">
+                        <h3 className="font-bold text-sm text-gray-900 mb-1 whitespace-nowrap max-w-36 truncate">
                           {item.product.name}
                         </h3>
                         
@@ -469,7 +510,7 @@ export default function BrochureEditor({
                               ${item.product.originalPrice.toFixed(2)}
                             </span>
                           )}
-                          <span className="text-lg font-bold text-red-600">
+                          <span className="text-base font-bold text-red-600">
                             ${item.newPrice.toFixed(2)}
                           </span>
                         </div>
