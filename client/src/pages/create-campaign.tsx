@@ -35,6 +35,16 @@ export default function CreateCampaign() {
     );
   };
 
+  const handleProductPositionUpdate = (productId: number, x: number, y: number) => {
+    setSelectedProducts(prev => 
+      prev.map(cp => 
+        cp.id === productId 
+          ? { ...cp, positionX: x, positionY: y }
+          : cp
+      )
+    );
+  };
+
   const handleProductRemove = (id: number) => {
     setSelectedProducts(prev => prev.filter(cp => cp.id !== id));
   };
@@ -61,6 +71,7 @@ export default function CreateCampaign() {
           selectedProducts={selectedProducts}
           campaign={currentCampaign}
           onCampaignUpdate={setCurrentCampaign}
+          onProductPositionUpdate={handleProductPositionUpdate}
         />
       </div>
     </div>

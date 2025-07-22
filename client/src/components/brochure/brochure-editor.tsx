@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Eye, Download, Building, CalendarIcon, Image } from "lucide-react";
+import { Eye, Download, Building, CalendarIcon, Image, Move } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Product, CampaignProduct, Template, Logo } from "@shared/schema";
@@ -16,12 +16,14 @@ interface BrochureEditorProps {
   selectedProducts: (CampaignProduct & { product: Product })[];
   campaign: any;
   onCampaignUpdate: (campaign: any) => void;
+  onProductPositionUpdate?: (productId: number, x: number, y: number) => void;
 }
 
 export default function BrochureEditor({
   selectedProducts,
   campaign,
   onCampaignUpdate,
+  onProductPositionUpdate,
 }: BrochureEditorProps) {
   const { user } = useAuth();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -30,12 +32,40 @@ export default function BrochureEditor({
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
+  const [draggedProductId, setDraggedProductId] = useState<number | null>(null);
   const [elementPositions, setElementPositions] = useState({
     logo: { x: 32, y: 32 },
     companyName: { x: 112, y: 32 },
     dateRange: { x: 450, y: 32 },
   });
+  const [productPositions, setProductPositions] = useState<Record<number, { x: number; y: number }>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Initialize product positions when selectedProducts change
+  useEffect(() => {
+    const newPositions: Record<number, { x: number; y: number }> = {};
+    selectedProducts.forEach((item, index) => {
+      if (!productPositions[item.id]) {
+        // Use saved position if available, otherwise arrange in a 3-column grid
+        if (item.positionX !== undefined && item.positionY !== undefined && item.positionX !== null && item.positionY !== null && (item.positionX !== 0 || item.positionY !== 0)) {
+          newPositions[item.id] = {
+            x: item.positionX,
+            y: item.positionY,
+          };
+        } else {
+          const col = index % 3;
+          const row = Math.floor(index / 3);
+          newPositions[item.id] = {
+            x: 50 + (col * 180), // 180px apart horizontally
+            y: 150 + (row * 200), // 200px apart vertically
+          };
+        }
+      } else {
+        newPositions[item.id] = productPositions[item.id];
+      }
+    });
+    setProductPositions(newPositions);
+  }, [selectedProducts]);
 
   const { data: templates = [] } = useQuery<Template[]>({
     queryKey: ["/api/templates", user?.id],
@@ -94,23 +124,50 @@ export default function BrochureEditor({
   const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
     e.preventDefault();
     setDraggedElement(elementType);
+    setDraggedProductId(null);
+  };
+
+  const handleProductMouseDown = (productId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedProductId(productId);
+    setDraggedElement(null);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggedElement || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    setElementPositions(prev => ({
-      ...prev,
-      [draggedElement]: { x: Math.max(0, x - 25), y: Math.max(0, y - 25) }
-    }));
+    if (draggedElement) {
+      setElementPositions(prev => ({
+        ...prev,
+        [draggedElement]: { x: Math.max(0, x - 25), y: Math.max(0, y - 25) }
+      }));
+    }
+    
+    if (draggedProductId) {
+      setProductPositions(prev => ({
+        ...prev,
+        [draggedProductId]: { 
+          x: Math.max(0, Math.min(x - 80, 600 - 160)), // Keep within canvas bounds (160px is product width)
+          y: Math.max(0, Math.min(y - 80, 800 - 160))  // Keep within canvas bounds (160px is product height)
+        }
+      }));
+    }
   };
 
   const handleMouseUp = () => {
+    // Save product position when dragging ends
+    if (draggedProductId && onProductPositionUpdate && productPositions[draggedProductId]) {
+      const position = productPositions[draggedProductId];
+      onProductPositionUpdate(draggedProductId, position.x, position.y);
+    }
+    
     setDraggedElement(null);
+    setDraggedProductId(null);
   };
 
   const handleGeneratePDF = async () => {
@@ -313,69 +370,89 @@ export default function BrochureEditor({
               </div>
             </div>
 
-            {/* Product Grid - Market Style */}
-            <div className="absolute top-24 left-4 right-4 bottom-4">
-              {selectedProducts.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="bg-black bg-opacity-50 rounded-lg p-4 inline-block">
-                    <p className="text-white font-semibold">No products added yet</p>
-                    <p className="text-sm text-gray-200 mt-1">
-                      Add products from the left panel to see them here
-                    </p>
-                  </div>
+            {/* Drop zone message when no products */}
+            {selectedProducts.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-black bg-opacity-50 rounded-lg p-6 text-center">
+                  <p className="text-white font-semibold text-lg">No products added yet</p>
+                  <p className="text-sm text-gray-200 mt-2">
+                    Add products from the left panel and drag them to position them on your brochure
+                  </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-4 h-full">
-                  {selectedProducts.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col items-center justify-center"
-                    >
-                      {/* Circular Product Container */}
-                      <div className="relative">
-                        {/* Product Circle */}
-                        <div className="w-32 h-32 rounded-full bg-white shadow-lg border-4 border-yellow-400 flex items-center justify-center overflow-hidden">
-                          {item.product.imageUrl ? (
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">No Image</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Discount Badge */}
-                        {item.discountPercent > 0 && (
-                          <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
-                            {item.discountPercent}%<br/>OFF
+              </div>
+            )}
+
+            {/* Draggable Products */}
+            {selectedProducts.map((item) => {
+              const position = productPositions[item.id] || { x: 0, y: 0 };
+              const isDragging = draggedProductId === item.id;
+              
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "absolute cursor-move select-none transition-opacity",
+                    isDragging ? "opacity-80 z-10" : "opacity-100"
+                  )}
+                  style={{ 
+                    left: position.x, 
+                    top: position.y,
+                    transform: isDragging ? "scale(1.05)" : "scale(1)"
+                  }}
+                  onMouseDown={(e) => handleProductMouseDown(item.id, e)}
+                >
+                  {/* Move handle */}
+                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg z-10">
+                    <Move className="w-3 h-3" />
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200 hover:border-blue-400 transition-colors">
+                    {/* Product Image Container */}
+                    <div className="relative">
+                      <div className="w-28 h-28 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-yellow-400">
+                        {item.product.imageUrl ? (
+                          <img
+                            src={item.product.imageUrl}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <span className="text-gray-400 text-xs">No Image</span>
                           </div>
                         )}
                       </div>
                       
-                      {/* Product Info */}
-                      <div className="mt-3 text-center bg-white bg-opacity-90 rounded-lg p-2 shadow-md">
-                        <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-2">
-                          {item.product.name}
-                        </h3>
-                        
-                        <div className="flex items-center justify-center space-x-2">
+                      {/* Discount Badge */}
+                      {item.discountPercent > 0 && (
+                        <div className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-white shadow-md">
+                          {item.discountPercent}%
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Product Info */}
+                    <div className="mt-2 text-center">
+                      <h3 className="font-bold text-xs text-gray-900 mb-1 line-clamp-2 leading-tight">
+                        {item.product.name}
+                      </h3>
+                      
+                      <div className="flex items-center justify-center space-x-1">
+                        {item.discountPercent > 0 && (
                           <span className="text-xs text-gray-500 line-through">
                             ${item.product.originalPrice.toFixed(2)}
                           </span>
-                          <span className="text-lg font-bold text-red-600">
-                            ${item.newPrice.toFixed(2)}
-                          </span>
-                        </div>
+                        )}
+                        <span className="text-sm font-bold text-red-600">
+                          ${item.newPrice.toFixed(2)}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
 
