@@ -18,12 +18,24 @@ export default function LogoUpload() {
 
   const { data: logos = [], isLoading } = useQuery<Logo[]>({
     queryKey: ["/api/logos", user?.id],
-    enabled: !!user,
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch(`/api/logos?userId=${user.id}`);
+      if (!response.ok) throw new Error('Failed to fetch logos');
+      return response.json();
+    },
+    enabled: !!user?.id,
   });
 
   const { data: activeLogo } = useQuery<Logo | null>({
     queryKey: ["/api/logos/active", user?.id],
-    enabled: !!user,
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const response = await fetch(`/api/logos/active?userId=${user.id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!user?.id,
   });
 
   const uploadMutation = useMutation({
@@ -171,41 +183,7 @@ export default function LogoUpload() {
         </CardContent>
       </Card>
 
-      {/* Current Active Logo */}
-      <Card>
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Current Active Logo</h2>
-        </div>
-        <CardContent className="p-6">
-          {activeLogo ? (
-            <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Building className="w-12 h-12 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">{activeLogo.name}</h3>
-                <p className="text-gray-600 mb-4">Main logo used in all brochures</p>
-                <div className="flex space-x-3">
-                  <Button variant="outline">
-                    Update Logo
-                  </Button>
-                  <Button variant="outline">
-                    Download
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Building className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No active logo</h3>
-              <p className="text-gray-600">Upload a logo and set it as active to use in brochures.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
 
       {/* Logo Library */}
       <Card>
@@ -237,8 +215,17 @@ export default function LogoUpload() {
                   key={logo.id}
                   className="border border-gray-200 rounded-xl p-4 text-center hover:shadow-md transition-shadow"
                 >
-                  <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Building className="w-8 h-8 text-primary" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3 overflow-hidden">
+                    <img 
+                      src={logo.filePath ? `/uploads/${logo.filePath.split('/').pop()}` : ''}
+                      alt={logo.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style');
+                      }}
+                    />
+                    <Building className="w-8 h-8 text-primary" style={{display: 'none'}} />
                   </div>
                   <p className="text-xs text-gray-600 mb-2">{logo.name}</p>
                   <div className="flex justify-center space-x-1">
