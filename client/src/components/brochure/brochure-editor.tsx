@@ -38,37 +38,40 @@ export default function BrochureEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const { data: templates = [] } = useQuery<Template[]>({
-    queryKey: ["/api/templates"],
+    queryKey: ["/api/templates", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/templates?userId=${user?.id}`);
+      if (!user?.id) return [];
+      const response = await fetch(`/api/templates?userId=${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: logos = [] } = useQuery<Logo[]>({
-    queryKey: ["/api/logos"],
+    queryKey: ["/api/logos", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/logos?userId=${user?.id}`);
+      if (!user?.id) return [];
+      const response = await fetch(`/api/logos?userId=${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch logos');
       return response.json();
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: activeLogo } = useQuery<Logo | null>({
-    queryKey: ["/api/logos/active"],
+    queryKey: ["/api/logos/active", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/logos/active?userId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch active logo');
+      if (!user?.id) return null;
+      const response = await fetch(`/api/logos/active?userId=${user.id}`);
+      if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
-  const selectedLogo = logos.find(l => l.id === selectedLogoId) || activeLogo;
+  const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
+  const selectedLogo = logos?.find(l => l.id === selectedLogoId) || activeLogo;
 
   const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
     e.preventDefault();

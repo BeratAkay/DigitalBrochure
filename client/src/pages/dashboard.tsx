@@ -19,14 +19,15 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["/api/campaigns", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/campaigns?userId=${user?.id}`);
+      if (!user?.id) return [];
+      const response = await fetch(`/api/campaigns?userId=${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch campaigns');
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: stats } = useQuery<{
@@ -197,7 +198,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {campaigns.map((campaign: Campaign) => (
+                {Array.isArray(campaigns) && campaigns.map((campaign: Campaign) => (
                   <tr key={campaign.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
