@@ -73,6 +73,24 @@ export default function BrochureEditor({
   const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
   const selectedLogo = logos?.find(l => l.id === selectedLogoId) || activeLogo;
 
+  const handleTemplateSelect = (value: string) => {
+    try {
+      const templateId = parseInt(value);
+      setSelectedTemplateId(templateId);
+    } catch (error) {
+      console.error('Error selecting template:', error);
+    }
+  };
+
+  const handleLogoSelect = (value: string) => {
+    try {
+      const logoId = parseInt(value);
+      setSelectedLogoId(logoId);
+    } catch (error) {
+      console.error('Error selecting logo:', error);
+    }
+  };
+
   const handleMouseDown = (elementType: string, e: React.MouseEvent) => {
     e.preventDefault();
     setDraggedElement(elementType);
@@ -132,12 +150,12 @@ export default function BrochureEditor({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Choose Template
               </label>
-              <Select value={selectedTemplateId?.toString()} onValueChange={(value) => setSelectedTemplateId(parseInt(value))}>
+              <Select value={selectedTemplateId?.toString()} onValueChange={handleTemplateSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template) => (
+                  {Array.isArray(templates) && templates.map((template) => (
                     <SelectItem key={template.id} value={template.id.toString()}>
                       {template.name}
                     </SelectItem>
@@ -150,12 +168,12 @@ export default function BrochureEditor({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Choose Logo
               </label>
-              <Select value={selectedLogoId?.toString() || activeLogo?.id?.toString()} onValueChange={(value) => setSelectedLogoId(parseInt(value))}>
+              <Select value={selectedLogoId?.toString() || activeLogo?.id?.toString()} onValueChange={handleLogoSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a logo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {logos.map((logo) => (
+                  {Array.isArray(logos) && logos.map((logo) => (
                     <SelectItem key={logo.id} value={logo.id.toString()}>
                       {logo.name}
                     </SelectItem>

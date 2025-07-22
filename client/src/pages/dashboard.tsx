@@ -18,16 +18,21 @@ import type { Campaign } from "@shared/schema";
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const { data: campaigns = [], isLoading: campaignsLoading } = useQuery<Campaign[]>({
+  const { data: campaigns = [], isLoading: campaignsLoading, error: campaignsError } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const response = await fetch(`/api/campaigns?userId=${user.id}`);
-      if (!response.ok) throw new Error('Failed to fetch campaigns');
+      if (!response.ok) {
+        console.error('Failed to fetch campaigns:', response.status);
+        return [];
+      }
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
     enabled: !!user?.id,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: stats } = useQuery<{

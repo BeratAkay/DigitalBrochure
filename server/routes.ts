@@ -26,7 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = loginSchema.parse(req.body);
       const user = await storage.getUserByUsername(username);
-      
+
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-      
+
       const campaigns = await storage.getCampaigns(userId);
       res.json(campaigns);
     } catch (error) {
@@ -56,11 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const campaign = await storage.getCampaign(id);
-      
+
       if (!campaign) {
         return res.status(404).json({ message: "Campaign not found" });
       }
-      
+
       res.json(campaign);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch campaign" });
@@ -81,12 +81,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const campaign = await storage.updateCampaign(id, updates);
       if (!campaign) {
         return res.status(404).json({ message: "Campaign not found" });
       }
-      
+
       res.json(campaign);
     } catch (error) {
       res.status(500).json({ message: "Failed to update campaign" });
@@ -97,11 +97,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteCampaign(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Campaign not found" });
       }
-      
+
       res.json({ message: "Campaign deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete campaign" });
@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const search = req.query.search as string;
       const category = req.query.category as string;
-      
+
       const products = await storage.getProducts(search, category);
       res.json(products);
     } catch (error) {
@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", upload.single("image"), async (req, res) => {
     try {
       const { name, description, originalPrice, category } = req.body;
-      
+
       const productData = {
         name,
         description: description || null,
@@ -132,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category,
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
       };
-      
+
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
@@ -144,19 +144,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { name, description, originalPrice, category } = req.body;
-      
+
       const updates: any = {};
       if (name) updates.name = name;
       if (description !== undefined) updates.description = description || null;
       if (originalPrice) updates.originalPrice = parseFloat(originalPrice);
       if (category) updates.category = category;
       if (req.file) updates.imageUrl = `/uploads/${req.file.filename}`;
-      
+
       const product = await storage.updateProduct(id, updates);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
-      
+
       res.json(product);
     } catch (error) {
       res.status(500).json({ message: "Failed to update product" });
@@ -167,11 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteProduct(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Product not found" });
       }
-      
+
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete product" });
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const campaignId = parseInt(req.params.campaignId);
       const campaignProducts = await storage.getCampaignProducts(campaignId);
-      
+
       // Enrich with product details
       const enrichedProducts = await Promise.all(
         campaignProducts.map(async (cp) => {
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...cp, product };
         })
       );
-      
+
       res.json(enrichedProducts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch campaign products" });
@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const campaignId = parseInt(req.params.campaignId);
       const productData = { ...req.body, campaignId };
-      
+
       const campaignProduct = await storage.addProductToCampaign(productData);
       res.status(201).json(campaignProduct);
     } catch (error) {
@@ -214,12 +214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const campaignProduct = await storage.updateCampaignProduct(id, updates);
       if (!campaignProduct) {
         return res.status(404).json({ message: "Campaign product not found" });
       }
-      
+
       res.json(campaignProduct);
     } catch (error) {
       res.status(500).json({ message: "Failed to update campaign product" });
@@ -230,11 +230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.removeCampaignProduct(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Campaign product not found" });
       }
-      
+
       res.json({ message: "Product removed from campaign" });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove product from campaign" });
@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-      
+
       const templates = await storage.getTemplates(userId);
       res.json(templates);
     } catch (error) {
@@ -258,22 +258,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/templates", upload.single("file"), async (req, res) => {
     try {
-      const { name, description, userId } = req.body;
-      
       if (!req.file) {
-        return res.status(400).json({ message: "File is required" });
+        return res.status(400).json({ message: "No file uploaded" });
       }
-      
-      const template = await storage.createTemplate({
+
+      const { name, description, userId } = req.body;
+      if (!name || !userId) {
+        return res.status(400).json({ message: "Name and user ID are required" });
+      }
+
+      // Validate file type - only allow image files and common design files
+      const allowedMimes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'image/svg+xml', 'application/pdf', 'text/html'
+      ];
+
+      if (!allowedMimes.includes(req.file.mimetype)) {
+        return res.status(400).json({ 
+          message: "Invalid file type. Please upload an image, PDF, or HTML file." 
+        });
+      }
+
+      const template = await storage.addTemplate({
         name,
-        description,
+        description: description || null,
+        filePath: req.file.filename,
         userId: parseInt(userId),
-        filePath: req.file.path,
-        thumbnailPath: req.file.path, // In a real app, you'd generate thumbnails
       });
-      
+
       res.status(201).json(template);
     } catch (error) {
+      console.error("Template upload error:", error);
       res.status(500).json({ message: "Failed to upload template" });
     }
   });
@@ -285,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-      
+
       const logos = await storage.getLogos(userId);
       res.json(logos);
     } catch (error) {
@@ -299,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-      
+
       const logo = await storage.getActiveLogo(userId);
       res.json(logo);
     } catch (error) {
@@ -310,18 +325,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/logos", upload.single("file"), async (req, res) => {
     try {
       const { name, userId } = req.body;
-      
+
       if (!req.file) {
         return res.status(400).json({ message: "File is required" });
       }
-      
+
       const logo = await storage.createLogo({
         name,
         userId: parseInt(userId),
         filePath: req.file.path,
         isActive: false,
       });
-      
+
       res.status(201).json(logo);
     } catch (error) {
       res.status(500).json({ message: "Failed to upload logo" });
@@ -332,13 +347,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const logoId = parseInt(req.params.id);
       const { userId } = req.body;
-      
+
       const success = await storage.setActiveLogo(userId, logoId);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Logo not found" });
       }
-      
+
       res.json({ message: "Logo activated successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to activate logo" });
@@ -366,17 +381,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-      
+
       const campaigns = await storage.getCampaigns(userId);
       const templates = await storage.getTemplates(userId);
-      
+
       const stats = {
         totalCampaigns: campaigns.length,
         activeCampaigns: campaigns.filter(c => c.status === "active").length,
         totalTemplates: templates.length,
         totalDownloads: 156, // Mock value for demo
       };
-      
+
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch statistics" });
