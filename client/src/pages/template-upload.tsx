@@ -20,7 +20,12 @@ export default function TemplateUpload() {
   const [templateDescription, setTemplateDescription] = useState("");
 
   const { data: templates = [], isLoading } = useQuery<Template[]>({
-    queryKey: ["/api/templates", user?.id],
+    queryKey: ["/api/templates"],
+    queryFn: async () => {
+      const response = await fetch(`/api/templates?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
     enabled: !!user,
   });
 
@@ -37,7 +42,6 @@ export default function TemplateUpload() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/templates", user?.id] });
       toast({
         title: "Template uploaded successfully",
         description: "Your template is now available for use in campaigns.",
