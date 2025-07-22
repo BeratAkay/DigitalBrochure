@@ -267,10 +267,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Name and user ID are required" });
       }
 
-      // Validate file type - only allow image files and common design files
+      // Validate file type - allow image files and common design files for templates
       const allowedMimes = [
         'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        'image/svg+xml', 'application/pdf', 'text/html'
+        'image/svg+xml', 'application/pdf', 'text/html', 'application/postscript'
       ];
 
       if (!allowedMimes.includes(req.file.mimetype)) {
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const template = await storage.addTemplate({
+      const template = await storage.createTemplate({
         name,
         description: description || null,
         filePath: req.file.filename,

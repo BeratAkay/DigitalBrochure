@@ -109,7 +109,7 @@ export default function TemplateUpload() {
                 <input
                   id="template-file"
                   type="file"
-                  accept=".pdf,.ai,.psd,.svg"
+                  accept=".pdf,.ai,.psd,.svg,.jpg,.jpeg,.png,.gif,.webp"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -120,7 +120,7 @@ export default function TemplateUpload() {
                   Choose Files
                 </Button>
                 <p className="text-xs text-gray-500 mt-3">
-                  Supports: PDF, AI, PSD, SVG (Max 50MB)
+                  Supports: PDF, AI, PSD, SVG, JPG, JPEG, PNG, GIF, WEBP (Max 50MB)
                 </p>
               </div>
               {selectedFile && (
