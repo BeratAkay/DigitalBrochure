@@ -38,8 +38,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Serve uploaded files
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  // This route is handled by routes.ts registerRoutes function
   
   const server = await registerRoutes(app);
 

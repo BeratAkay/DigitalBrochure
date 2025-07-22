@@ -289,21 +289,31 @@ export default function BrochureEditor({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Hide all edit controls before capturing
+    const editControls = canvas.querySelectorAll('[data-edit-control="true"]');
+    const originalDisplay = Array.from(editControls).map(el => (el as HTMLElement).style.display);
+    editControls.forEach(el => ((el as HTMLElement).style.display = 'none'));
+
     if (format === "pdf") {
       // For PDF, we would use a library like html2pdf or puppeteer
       toast({
         title: "PDF Download",
         description: "PDF generation will be implemented with a proper PDF library.",
       });
+      // Restore edit controls
+      editControls.forEach((el, index) => ((el as HTMLElement).style.display = originalDisplay[index]));
     } else {
       // For image formats, we can use html2canvas
       import('html2canvas').then((module) => {
         const html2canvas = module.default;
-        html2canvas(canvas).then((canvas) => {
+        html2canvas(canvas).then((downloadCanvas) => {
           const link = document.createElement('a');
           link.download = `brochure.${format}`;
-          link.href = canvas.toDataURL(`image/${format}`);
+          link.href = downloadCanvas.toDataURL(`image/${format}`);
           link.click();
+          
+          // Restore edit controls after download
+          editControls.forEach((el, index) => ((el as HTMLElement).style.display = originalDisplay[index]));
         });
       }).catch(() => {
         toast({
@@ -311,6 +321,8 @@ export default function BrochureEditor({
           description: "Could not generate image. Please try again.",
           variant: "destructive",
         });
+        // Restore edit controls even on error
+        editControls.forEach((el, index) => ((el as HTMLElement).style.display = originalDisplay[index]));
       });
     }
     setIsDownloadOpen(false);
@@ -550,7 +562,7 @@ export default function BrochureEditor({
                   }}
                 >
                   {/* Control Buttons */}
-                  <div className="absolute -top-4 -right-4 flex space-x-1 z-30">
+                  <div className="absolute -top-4 -right-4 flex space-x-1 z-30" data-edit-control="true">
                     {/* Rotate Handle */}
                     <div
                       onMouseDown={(e) => handleProductRotateStart(item.id, e)}
@@ -595,9 +607,9 @@ export default function BrochureEditor({
                     
                     {/* Discount Badge - Fixed position, doesn't rotate */}
                     {item.discountPercent > 0 && (
-                      <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full w-14 h-14 flex flex-col items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
-                        <span className="text-xs leading-tight">{item.discountPercent}%</span>
-                        <span className="text-xs leading-tight">OFF</span>
+                      <div className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-10 h-10 flex flex-col items-center justify-center font-bold border-2 border-white shadow-lg">
+                        <span className="text-xs leading-none">{item.discountPercent}%</span>
+                        <span style={{ fontSize: '6px' }} className="leading-none">OFF</span>
                       </div>
                     )}
                     

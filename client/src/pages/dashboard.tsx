@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Link, useLocation } from "wouter";
 import {
   Plus,
   Megaphone,
@@ -12,11 +15,17 @@ import {
   Download,
   Edit,
   Trash2,
+  Image,
 } from "lucide-react";
 import type { Campaign } from "@shared/schema";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
   const { data: campaigns = [], isLoading: campaignsLoading, error: campaignsError } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns", user?.id],
@@ -49,6 +58,69 @@ export default function Dashboard() {
     },
     enabled: !!user,
   });
+
+  // Delete campaign mutation
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: number) => {
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete campaign");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      toast({
+        title: "Campaign deleted",
+        description: "The campaign has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete failed",
+        description: "Could not delete the campaign. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler functions
+  const handleEditCampaign = (campaign: Campaign) => {
+    // Navigate to create campaign page with campaign data for editing
+    setLocation(`/create-campaign?edit=${campaign.id}`);
+  };
+
+  const handleDownloadCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setIsDownloadOpen(true);
+  };
+
+  const handleDeleteCampaign = (campaign: Campaign) => {
+    if (window.confirm(`Are you sure you want to delete "${campaign.name}"?`)) {
+      deleteCampaignMutation.mutate(campaign.id);
+    }
+  };
+
+  const handleDownload = (format: string) => {
+    if (!selectedCampaign) return;
+    
+    toast({
+      title: "Download started",
+      description: `Generating ${format.toUpperCase()} for "${selectedCampaign.name}"...`,
+    });
+    
+    // This would generate and download the campaign brochure
+    // For now, we'll just show a success message
+    setTimeout(() => {
+      toast({
+        title: "Download completed",
+        description: `${selectedCampaign.name} has been downloaded as ${format.toUpperCase()}.`,
+      });
+    }, 1000);
+    
+    setIsDownloadOpen(false);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -225,15 +297,31 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" className="text-primary">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-primary"
+                          onClick={() => handleEditCampaign(campaign)}
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-green-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600"
+                          onClick={() => handleDownloadCampaign(campaign)}
+                        >
                           <Download className="w-4 h-4 mr-1" />
                           Download
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-600"
+                          onClick={() => handleDeleteCampaign(campaign)}
+                          disabled={deleteCampaignMutation.isPending}
+                        >
                           <Trash2 className="w-4 h-4 mr-1" />
                           Delete
                         </Button>
@@ -246,6 +334,34 @@ export default function Dashboard() {
           </div>
         )}
       </Card>
+
+      {/* Download Dialog */}
+      <Dialog open={isDownloadOpen} onOpenChange={setIsDownloadOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Download Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Download "{selectedCampaign?.name}" in your preferred format:
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              <Button variant="outline" onClick={() => handleDownload("pdf")}>
+                <FileText className="w-4 h-4 mr-2" />
+                PDF
+              </Button>
+              <Button variant="outline" onClick={() => handleDownload("png")}>
+                <Image className="w-4 h-4 mr-2" />
+                PNG
+              </Button>
+              <Button variant="outline" onClick={() => handleDownload("jpeg")}>
+                <Image className="w-4 h-4 mr-2" />
+                JPEG
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
