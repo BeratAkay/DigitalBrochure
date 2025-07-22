@@ -257,13 +257,14 @@ export default function BrochureEditor({
         <div className="mb-6">
           <div
             ref={canvasRef}
-            className="drag-drop-area border-2 border-dashed border-gray-300 rounded-xl relative mx-auto bg-gradient-to-br from-blue-400 to-purple-600"
+            className="drag-drop-area border-2 border-dashed border-gray-300 rounded-xl relative mx-auto"
             style={{ 
               width: "600px", 
               height: "800px",
-              backgroundImage: selectedTemplate ? `url(${selectedTemplate.thumbnailPath})` : undefined,
+              backgroundImage: selectedTemplate ? `url(/uploads/${selectedTemplate.filePath})` : 'linear-gradient(135deg, #60a5fa 0%, #a855f7 100%)',
               backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
             }}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
