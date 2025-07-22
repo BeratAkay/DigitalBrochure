@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Eye, Download, Building, CalendarIcon, Image, Move } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, Download, Building, CalendarIcon, Image, Move, Save, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import type { Product, CampaignProduct, Template, Logo } from "@shared/schema";
 
 interface BrochureEditorProps {
@@ -26,11 +29,18 @@ export default function BrochureEditor({
   onProductPositionUpdate,
 }: BrochureEditorProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [selectedLogoId, setSelectedLogoId] = useState<number | null>(null);
   const [companyName, setCompanyName] = useState("Your Company Name");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [campaignName, setCampaignName] = useState("");
+  const [campaignDescription, setCampaignDescription] = useState("");
+  const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [draggedProductId, setDraggedProductId] = useState<number | null>(null);
   const [rotatingProductId, setRotatingProductId] = useState<number | null>(null);
@@ -210,8 +220,100 @@ export default function BrochureEditor({
     setRotatingProductId(null);
   };
 
-  const handleGeneratePDF = async () => {
-    alert("PDF generation would be implemented here");
+  const createCampaignMutation = useMutation({
+    mutationFn: async (campaignData: any) => {
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(campaignData),
+      });
+      if (!response.ok) throw new Error("Campaign creation failed");
+      return response.json();
+    },
+    onSuccess: (newCampaign) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({
+        title: "Campaign created successfully",
+        description: "Your campaign has been saved and can be viewed in the dashboard.",
+      });
+      setIsCreateCampaignOpen(false);
+      setLocation("/dashboard");
+    },
+    onError: () => {
+      toast({
+        title: "Campaign creation failed",
+        description: "There was an error creating your campaign.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateCampaign = () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: "No products selected",
+        description: "Please add some products to your brochure before creating a campaign.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsCreateCampaignOpen(true);
+  };
+
+  const handleSaveCampaign = () => {
+    if (!campaignName.trim()) {
+      toast({
+        title: "Campaign name required",
+        description: "Please enter a name for your campaign.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const campaignData = {
+      name: campaignName,
+      description: campaignDescription || null,
+      status: "active",
+      companyName: companyName,
+      userId: user?.id,
+      startDate: startDate?.toISOString() || null,
+      endDate: endDate?.toISOString() || null,
+      templateId: selectedTemplateId,
+      logoId: selectedLogoId,
+    };
+
+    createCampaignMutation.mutate(campaignData);
+  };
+
+  const handleDownload = (format: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    if (format === "pdf") {
+      // For PDF, we would use a library like html2pdf or puppeteer
+      toast({
+        title: "PDF Download",
+        description: "PDF generation will be implemented with a proper PDF library.",
+      });
+    } else {
+      // For image formats, we can use html2canvas
+      import('html2canvas').then((module) => {
+        const html2canvas = module.default;
+        html2canvas(canvas).then((canvas) => {
+          const link = document.createElement('a');
+          link.download = `brochure.${format}`;
+          link.href = canvas.toDataURL(`image/${format}`);
+          link.click();
+        });
+      }).catch(() => {
+        toast({
+          title: "Download failed",
+          description: "Could not generate image. Please try again.",
+          variant: "destructive",
+        });
+      });
+    }
+    setIsDownloadOpen(false);
   };
 
   const formatDateRange = () => {
@@ -227,13 +329,13 @@ export default function BrochureEditor({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">Brochure Designer</h2>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <Eye className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
-            <Button size="sm" onClick={handleGeneratePDF}>
+            <Button variant="outline" size="sm" onClick={() => setIsDownloadOpen(true)}>
               <Download className="w-4 h-4 mr-2" />
               Download
+            </Button>
+            <Button size="sm" onClick={handleCreateCampaign}>
+              <Save className="w-4 h-4 mr-2" />
+              Create Campaign
             </Button>
           </div>
         </div>
@@ -373,16 +475,19 @@ export default function BrochureEditor({
               style={{ left: elementPositions.logo.x, top: elementPositions.logo.y }}
               onMouseDown={(e) => handleMouseDown('logo', e)}
             >
-              <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
                 {selectedLogo ? (
                   <img 
-                    src={selectedLogo.filePath} 
+                    src={selectedLogo.filePath ? `/uploads/${selectedLogo.filePath.split('/').pop()}` : ''} 
                     alt="Company Logo" 
                     className="w-full h-full object-contain rounded-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style');
+                    }}
                   />
-                ) : (
-                  <Building className="w-8 h-8 text-gray-400" />
-                )}
+                ) : null}
+                <Building className={`w-8 h-8 text-gray-400 ${selectedLogo ? 'hidden' : ''}`} />
               </div>
             </div>
 
@@ -522,9 +627,75 @@ export default function BrochureEditor({
             })}
           </div>
         </div>
-
-
       </div>
+
+      {/* Campaign Creation Dialog */}
+      <Dialog open={isCreateCampaignOpen} onOpenChange={setIsCreateCampaignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Campaign Name
+              </label>
+              <Input
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value)}
+                placeholder="Enter campaign name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description (Optional)
+              </label>
+              <Input
+                value={campaignDescription}
+                onChange={(e) => setCampaignDescription(e.target.value)}
+                placeholder="Enter campaign description"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setIsCreateCampaignOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveCampaign}
+                disabled={createCampaignMutation.isPending}
+              >
+                {createCampaignMutation.isPending ? "Creating..." : "Create Campaign"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Download Dialog */}
+      <Dialog open={isDownloadOpen} onOpenChange={setIsDownloadOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Download Brochure</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600">Choose your preferred download format:</p>
+            <div className="grid grid-cols-3 gap-3">
+              <Button variant="outline" onClick={() => handleDownload("pdf")}>
+                <FileText className="w-4 h-4 mr-2" />
+                PDF
+              </Button>
+              <Button variant="outline" onClick={() => handleDownload("png")}>
+                <Image className="w-4 h-4 mr-2" />
+                PNG
+              </Button>
+              <Button variant="outline" onClick={() => handleDownload("jpeg")}>
+                <Image className="w-4 h-4 mr-2" />
+                JPEG
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
