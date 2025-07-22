@@ -39,6 +39,7 @@ export default function BrochureEditor({
     dateRange: { x: 450, y: 32 },
   });
   const [productPositions, setProductPositions] = useState<Record<number, { x: number; y: number }>>({});
+  const [productRotations, setProductRotations] = useState<Record<number, number>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Initialize product positions when selectedProducts change
@@ -132,6 +133,15 @@ export default function BrochureEditor({
     e.stopPropagation();
     setDraggedProductId(productId);
     setDraggedElement(null);
+  };
+
+  const handleProductRotate = (productId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProductRotations(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) + 15) % 360
+    }));
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -382,71 +392,87 @@ export default function BrochureEditor({
               </div>
             )}
 
-            {/* Draggable Products */}
+            {/* Draggable Products - Market Style Circular */}
             {selectedProducts.map((item) => {
               const position = productPositions[item.id] || { x: 0, y: 0 };
+              const rotation = productRotations[item.id] || 0;
               const isDragging = draggedProductId === item.id;
               
               return (
                 <div
                   key={item.id}
                   className={cn(
-                    "absolute cursor-move select-none transition-opacity",
-                    isDragging ? "opacity-80 z-10" : "opacity-100"
+                    "absolute cursor-move select-none transition-all duration-200",
+                    isDragging ? "z-10 scale-105" : "z-0 scale-100"
                   )}
                   style={{ 
                     left: position.x, 
                     top: position.y,
-                    transform: isDragging ? "scale(1.05)" : "scale(1)"
+                    transform: `rotate(${rotation}deg) ${isDragging ? "scale(1.05)" : "scale(1)"}`,
+                    filter: isDragging ? "drop-shadow(0 10px 20px rgba(0,0,0,0.3))" : "drop-shadow(0 4px 8px rgba(0,0,0,0.2))"
                   }}
                   onMouseDown={(e) => handleProductMouseDown(item.id, e)}
                 >
-                  {/* Move handle */}
-                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg z-10">
-                    <Move className="w-3 h-3" />
+                  {/* Control Buttons */}
+                  <div className="absolute -top-3 -right-3 flex space-x-1 z-20">
+                    {/* Rotate Button */}
+                    <button
+                      onClick={(e) => handleProductRotate(item.id, e)}
+                      className="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg transition-colors"
+                      title="Rotate Product"
+                    >
+                      ↻
+                    </button>
+                    {/* Move Button */}
+                    <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg">
+                      <Move className="w-3 h-3" />
+                    </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-200 hover:border-blue-400 transition-colors">
-                    {/* Product Image Container */}
-                    <div className="relative">
-                      <div className="w-28 h-28 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-yellow-400">
-                        {item.product.imageUrl ? (
-                          <img
-                            src={item.product.imageUrl}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">No Image</span>
-                          </div>
-                        )}
-                      </div>
+                  {/* Main Product Container - Circular Market Style */}
+                  <div className="relative">
+                    {/* Circular Product Image */}
+                    <div className="w-32 h-32 rounded-full bg-white shadow-xl border-4 border-yellow-400 flex items-center justify-center overflow-hidden relative">
+                      {item.product.imageUrl ? (
+                        <img
+                          src={item.product.imageUrl}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover rounded-full"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-full">
+                          <span className="text-gray-400 text-xs font-medium">No Image</span>
+                        </div>
+                      )}
                       
-                      {/* Discount Badge */}
+                      {/* Discount Badge - Circular and Prominent */}
                       {item.discountPercent > 0 && (
-                        <div className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-white shadow-md">
-                          {item.discountPercent}%
+                        <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-12 h-12 flex flex-col items-center justify-center text-xs font-bold border-2 border-white shadow-lg animate-pulse">
+                          <span className="text-xs leading-none">{item.discountPercent}%</span>
+                          <span className="text-xs leading-none">OFF</span>
                         </div>
                       )}
                     </div>
                     
-                    {/* Product Info */}
-                    <div className="mt-2 text-center">
-                      <h3 className="font-bold text-xs text-gray-900 mb-1 line-clamp-2 leading-tight">
-                        {item.product.name}
-                      </h3>
-                      
-                      <div className="flex items-center justify-center space-x-1">
-                        {item.discountPercent > 0 && (
-                          <span className="text-xs text-gray-500 line-through">
-                            ${item.product.originalPrice.toFixed(2)}
+                    {/* Product Name - Floating below */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 text-center">
+                      <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200">
+                        <h3 className="font-bold text-sm text-gray-900 mb-1 max-w-32 truncate">
+                          {item.product.name}
+                        </h3>
+                        
+                        {/* Price Display */}
+                        <div className="flex items-center justify-center space-x-2">
+                          {item.discountPercent > 0 && (
+                            <span className="text-xs text-gray-500 line-through">
+                              ${item.product.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                          <span className="text-lg font-bold text-red-600">
+                            ${item.newPrice.toFixed(2)}
                           </span>
-                        )}
-                        <span className="text-sm font-bold text-red-600">
-                          ${item.newPrice.toFixed(2)}
-                        </span>
+                        </div>
                       </div>
                     </div>
                   </div>
