@@ -313,57 +313,68 @@ export default function BrochureEditor({
               </div>
             </div>
 
-            {/* Product Grid */}
-            <div className="absolute top-24 left-8 right-8 bottom-8">
-              <div className="bg-white bg-opacity-95 rounded-xl p-6 h-full overflow-y-auto">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">
-                  Special Offers
-                </h2>
-                
-                {selectedProducts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No products added yet</p>
-                    <p className="text-sm text-gray-400 mt-1">
+            {/* Product Grid - Market Style */}
+            <div className="absolute top-24 left-4 right-4 bottom-4">
+              {selectedProducts.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="bg-black bg-opacity-50 rounded-lg p-4 inline-block">
+                    <p className="text-white font-semibold">No products added yet</p>
+                    <p className="text-sm text-gray-200 mt-1">
                       Add products from the left panel to see them here
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {selectedProducts.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
-                      >
-                        {item.product.imageUrl && (
-                          <img
-                            src={item.product.imageUrl}
-                            alt={item.product.name}
-                            className="w-20 h-20 rounded-lg object-cover"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900">
-                            {item.product.name}
-                          </h3>
-                          <div className="flex items-center space-x-4 mt-2">
-                            <span className="text-gray-500 line-through">
-                              ${item.product.originalPrice.toFixed(2)}
-                            </span>
-                            <span className="text-2xl font-bold text-red-600">
-                              ${item.newPrice.toFixed(2)}
-                            </span>
-                            {item.discountPercent > 0 && (
-                              <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
-                                {item.discountPercent}% OFF
-                              </span>
-                            )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4 h-full">
+                  {selectedProducts.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col items-center justify-center"
+                    >
+                      {/* Circular Product Container */}
+                      <div className="relative">
+                        {/* Product Circle */}
+                        <div className="w-32 h-32 rounded-full bg-white shadow-lg border-4 border-yellow-400 flex items-center justify-center overflow-hidden">
+                          {item.product.imageUrl ? (
+                            <img
+                              src={item.product.imageUrl}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">No Image</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Discount Badge */}
+                        {item.discountPercent > 0 && (
+                          <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
+                            {item.discountPercent}%<br/>OFF
                           </div>
+                        )}
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="mt-3 text-center bg-white bg-opacity-90 rounded-lg p-2 shadow-md">
+                        <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-2">
+                          {item.product.name}
+                        </h3>
+                        
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-xs text-gray-500 line-through">
+                            ${item.product.originalPrice.toFixed(2)}
+                          </span>
+                          <span className="text-lg font-bold text-red-600">
+                            ${item.newPrice.toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
