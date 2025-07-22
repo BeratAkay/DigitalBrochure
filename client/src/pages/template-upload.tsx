@@ -192,7 +192,22 @@ export default function TemplateUpload() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates.map((template: Template) => (
                 <div key={template.id} className="border border-gray-200 rounded-xl p-4">
-                  <div className="w-full h-40 template-gradient-1 rounded-lg mb-4"></div>
+                  <div className="w-full h-40 bg-gray-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                    {template.filePath ? (
+                      <img 
+                        src={`/uploads/${template.filePath}`} 
+                        alt={template.name}
+                        className="w-full h-full object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center text-gray-500" style={{display: template.filePath ? 'none' : 'flex'}}>
+                      <span className="text-sm">No preview</span>
+                    </div>
+                  </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     {template.description || "No description"}

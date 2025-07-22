@@ -157,7 +157,16 @@ export default function BrochureEditor({
                 <SelectContent>
                   {Array.isArray(templates) && templates.map((template) => (
                     <SelectItem key={template.id} value={template.id.toString()}>
-                      {template.name}
+                      <div className="flex items-center space-x-2">
+                        {template.filePath && (
+                          <img 
+                            src={`/uploads/${template.filePath}`} 
+                            alt={template.name}
+                            className="w-6 h-6 object-cover rounded"
+                          />
+                        )}
+                        <span>{template.name}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
