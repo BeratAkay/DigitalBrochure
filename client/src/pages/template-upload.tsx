@@ -192,7 +192,22 @@ export default function TemplateUpload() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates.map((template: Template) => (
                 <div key={template.id} className="border border-gray-200 rounded-xl p-4">
-                  <div className="w-full h-40 template-gradient-1 rounded-lg mb-4"></div>
+                  <div className="w-full h-40 bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                    {template.filePath ? (
+                      <img 
+                        src={`/uploads/${template.filePath}`}
+                        alt={template.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDIwMCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTYwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NS41IDYwTDk1IDQ5LjVMMTA0LjUgNjBMOTUgNzBMODUuNSA2MFoiIGZpbGw9IiM5Q0E4QjQiLz4KPHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCA4MCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjQiIGZpbGw9IiNFNUU3RUIiLz4KPHJlY3QgeT0iOCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQiIGZpbGw9IiNFNUU3RUIiLz4KPC9zdmc+Cjwvc3ZnPgo=";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                        <CloudUpload className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     {template.description || "No description"}
