@@ -2,21 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { BarChart3, Users, Calendar, Download, Plus, Edit, Trash2, Eye, FileText, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import {
-  Plus,
-  Megaphone,
-  PlayCircle,
-  FileText,
-  Download,
-  Edit,
-  Trash2,
-  Image,
-} from "lucide-react";
 import type { Campaign } from "@shared/schema";
 
 export default function Dashboard() {
@@ -24,8 +17,11 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null);
 
   const { data: campaigns = [], isLoading: campaignsLoading, error: campaignsError } = useQuery<Campaign[]>({
     queryKey: ["/api/campaigns", user?.id],
@@ -87,8 +83,7 @@ export default function Dashboard() {
 
   // Handler functions
   const handleEditCampaign = (campaign: Campaign) => {
-    // Navigate to create campaign page with campaign data for editing
-    setLocation(`/create-campaign?edit=${campaign.id}`);
+    setLocation(`/create-campaign?campaignId=${campaign.id}`);
   };
 
   const handleDownloadCampaign = (campaign: Campaign) => {
@@ -104,12 +99,12 @@ export default function Dashboard() {
 
   const handleDownload = (format: string) => {
     if (!selectedCampaign) return;
-    
+
     toast({
       title: "Download started",
       description: `Generating ${format.toUpperCase()} for "${selectedCampaign.name}"...`,
     });
-    
+
     // This would generate and download the campaign brochure
     // For now, we'll just show a success message
     setTimeout(() => {
@@ -118,7 +113,7 @@ export default function Dashboard() {
         description: `${selectedCampaign.name} has been downloaded as ${format.toUpperCase()}.`,
       });
     }, 1000);
-    
+
     setIsDownloadOpen(false);
   };
 
@@ -137,6 +132,12 @@ export default function Dashboard() {
 
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString();
+  };
+
+  const handleDeleteConfirm = () => {
+    if (campaignToDelete) {
+      deleteCampaignMutation.mutate(campaignToDelete.id);
+    }
   };
 
   if (campaignsLoading) {
@@ -297,27 +298,26 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-primary"
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEditCampaign(campaign)}
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-green-600"
                           onClick={() => handleDownloadCampaign(campaign)}
                         >
                           <Download className="w-4 h-4 mr-1" />
                           Download
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-red-600"
                           onClick={() => handleDeleteCampaign(campaign)}
                           disabled={deleteCampaignMutation.isPending}

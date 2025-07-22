@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import ProductSearch from "@/components/products/product-search";
 import SelectedProducts from "@/components/products/selected-products";
 import BrochureEditor from "@/components/brochure/brochure-editor";
@@ -7,8 +9,50 @@ import type { Product, CampaignProduct } from "@shared/schema";
 
 export default function CreateCampaign() {
   const { user } = useAuth();
+  const [location] = useLocation();
   const [selectedProducts, setSelectedProducts] = useState<(CampaignProduct & { product: Product })[]>([]);
   const [currentCampaign, setCurrentCampaign] = useState<any>(null);
+
+  // Check if we're editing an existing campaign
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const campaignId = urlParams.get('campaignId');
+  const isEditing = !!campaignId;
+
+  // Fetch campaign data if editing
+  const { data: campaign } = useQuery({
+    queryKey: ["/api/campaigns", campaignId],
+    queryFn: async () => {
+      const response = await fetch(`/api/campaigns/${campaignId}`);
+      if (!response.ok) throw new Error('Failed to fetch campaign');
+      return response.json();
+    },
+    enabled: isEditing && !!campaignId,
+  });
+
+  // Fetch campaign products if editing
+  const { data: campaignProducts } = useQuery({
+    queryKey: ["/api/campaigns", campaignId, "products"],
+    queryFn: async () => {
+      const response = await fetch(`/api/campaigns/${campaignId}/products`);
+      if (!response.ok) throw new Error('Failed to fetch campaign products');
+      return response.json();
+    },
+    enabled: isEditing && !!campaignId,
+  });
+
+  // Load campaign data when editing
+  useEffect(() => {
+    if (isEditing && campaign) {
+      setCurrentCampaign(campaign);
+    }
+  }, [campaign, isEditing]);
+
+  // Load campaign products when editing
+  useEffect(() => {
+    if (isEditing && campaignProducts) {
+      setSelectedProducts(campaignProducts);
+    }
+  }, [campaignProducts, isEditing]);
 
   const handleProductSelect = (product: Product) => {
     const campaignProduct: CampaignProduct & { product: Product } = {

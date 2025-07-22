@@ -16,7 +16,10 @@ export const campaigns = pgTable("campaigns", {
   status: text("status").notNull().default("draft"), // draft, active, completed
   userId: integer("user_id").notNull(),
   templateId: integer("template_id"),
+  logoId: integer("logo_id"),
   companyName: text("company_name"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
   validUntil: text("valid_until"),
   createdAt: timestamp("created_at").defaultNow(),
 });

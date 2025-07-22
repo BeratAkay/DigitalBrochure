@@ -215,7 +215,7 @@ export class MemStorage implements IStorage {
   async updateCampaign(id: number, updates: Partial<Campaign>): Promise<Campaign | undefined> {
     const campaign = this.campaigns.get(id);
     if (!campaign) return undefined;
-    
+
     const updatedCampaign = { ...campaign, ...updates };
     this.campaigns.set(id, updatedCampaign);
     return updatedCampaign;
@@ -228,18 +228,18 @@ export class MemStorage implements IStorage {
   // Products
   async getProducts(search?: string, category?: string): Promise<Product[]> {
     let products = Array.from(this.products.values());
-    
+
     if (search) {
       products = products.filter(product => 
         product.name.toLowerCase().includes(search.toLowerCase()) ||
         product.description?.toLowerCase().includes(search.toLowerCase())
       );
     }
-    
+
     if (category && category !== "all") {
       products = products.filter(product => product.category === category);
     }
-    
+
     return products;
   }
 
@@ -264,7 +264,7 @@ export class MemStorage implements IStorage {
   async updateProduct(id: number, updates: Partial<Product>): Promise<Product | undefined> {
     const product = this.products.get(id);
     if (!product) return undefined;
-    
+
     const updatedProduct = { ...product, ...updates };
     this.products.set(id, updatedProduct);
     return updatedProduct;
@@ -298,7 +298,7 @@ export class MemStorage implements IStorage {
   async updateCampaignProduct(id: number, updates: Partial<CampaignProduct>): Promise<CampaignProduct | undefined> {
     const campaignProduct = this.campaignProducts.get(id);
     if (!campaignProduct) return undefined;
-    
+
     const updated = { ...campaignProduct, ...updates };
     this.campaignProducts.set(id, updated);
     return updated;

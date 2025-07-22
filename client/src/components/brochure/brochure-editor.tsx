@@ -54,6 +54,19 @@ export default function BrochureEditor({
   const [productRotations, setProductRotations] = useState<Record<number, number>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Initialize campaign settings when campaign prop changes
+  useEffect(() => {
+    if (campaign) {
+      setCampaignName(campaign.name || "");
+      setCampaignDescription(campaign.description || "");
+      setCompanyName(campaign.companyName || "Your Company Name");
+      setSelectedTemplateId(campaign.templateId || null);
+      setSelectedLogoId(campaign.logoId || null);
+      if (campaign.startDate) setStartDate(new Date(campaign.startDate));
+      if (campaign.endDate) setEndDate(new Date(campaign.endDate));
+    }
+  }, [campaign]);
+
   // Initialize product positions when selectedProducts change
   useEffect(() => {
     const newPositions: Record<number, { x: number; y: number }> = {};
@@ -220,33 +233,7 @@ export default function BrochureEditor({
     setRotatingProductId(null);
   };
 
-  const createCampaignMutation = useMutation({
-    mutationFn: async (campaignData: any) => {
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(campaignData),
-      });
-      if (!response.ok) throw new Error("Campaign creation failed");
-      return response.json();
-    },
-    onSuccess: (newCampaign) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      toast({
-        title: "Campaign created successfully",
-        description: "Your campaign has been saved and can be viewed in the dashboard.",
-      });
-      setIsCreateCampaignOpen(false);
-      setLocation("/dashboard");
-    },
-    onError: () => {
-      toast({
-        title: "Campaign creation failed",
-        description: "There was an error creating your campaign.",
-        variant: "destructive",
-      });
-    },
-  });
+  
 
   const handleCreateCampaign = () => {
     if (selectedProducts.length === 0) {
@@ -260,7 +247,7 @@ export default function BrochureEditor({
     setIsCreateCampaignOpen(true);
   };
 
-  const handleSaveCampaign = () => {
+  const handleSaveCampaign = async () => {
     if (!campaignName.trim()) {
       toast({
         title: "Campaign name required",
@@ -270,19 +257,65 @@ export default function BrochureEditor({
       return;
     }
 
-    const campaignData = {
-      name: campaignName,
-      description: campaignDescription || null,
-      status: "active",
-      companyName: companyName,
-      userId: user?.id,
-      startDate: startDate?.toISOString() || null,
-      endDate: endDate?.toISOString() || null,
-      templateId: selectedTemplateId,
-      logoId: selectedLogoId,
-    };
+    try {
+      // First create the campaign
+      const campaignData = {
+        name: campaignName,
+        description: campaignDescription || null,
+        status: "active",
+        companyName: companyName,
+        userId: user?.id,
+        startDate: startDate?.toISOString() || null,
+        endDate: endDate?.toISOString() || null,
+        templateId: selectedTemplateId,
+        logoId: selectedLogoId,
+      };
 
-    createCampaignMutation.mutate(campaignData);
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(campaignData),
+      });
+
+      if (!response.ok) throw new Error("Campaign creation failed");
+      
+      const newCampaign = await response.json();
+
+      // Now save all the campaign products with their positions
+      for (const product of selectedProducts) {
+        const position = productPositions[product.id] || { x: 0, y: 0 };
+        const campaignProductData = {
+          campaignId: newCampaign.id,
+          productId: product.product.id,
+          quantity: product.quantity,
+          discountPercent: product.discountPercent,
+          newPrice: product.newPrice,
+          positionX: position.x,
+          positionY: position.y,
+        };
+
+        await fetch(`/api/campaigns/${newCampaign.id}/products`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(campaignProductData),
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({
+        title: "Campaign created successfully",
+        description: "Your campaign has been saved with all product positions.",
+      });
+      setIsCreateCampaignOpen(false);
+      setLocation("/dashboard");
+
+    } catch (error) {
+      toast({
+        title: "Campaign creation failed",
+        description: "There was an error creating your campaign.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownload = (format: string) => {
@@ -672,11 +705,8 @@ export default function BrochureEditor({
               <Button variant="outline" onClick={() => setIsCreateCampaignOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSaveCampaign}
-                disabled={createCampaignMutation.isPending}
-              >
-                {createCampaignMutation.isPending ? "Creating..." : "Create Campaign"}
+              <Button onClick={handleSaveCampaign}>
+                Create Campaign
               </Button>
             </div>
           </div>
