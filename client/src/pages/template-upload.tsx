@@ -37,6 +37,7 @@ export default function TemplateUpload() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/templates", user?.id] });
       toast({
         title: "Template uploaded successfully",
         description: "Your template is now available for use in campaigns.",

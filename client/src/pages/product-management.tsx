@@ -44,6 +44,7 @@ export default function ProductManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", user?.id] });
       toast({ title: "Product created successfully!" });
       resetForm();
       setIsDialogOpen(false);
@@ -64,6 +65,7 @@ export default function ProductManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", user?.id] });
       toast({ title: "Product updated successfully!" });
       resetForm();
       setIsDialogOpen(false);
@@ -83,6 +85,7 @@ export default function ProductManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", user?.id] });
       toast({ title: "Product deleted successfully!" });
     },
     onError: () => {

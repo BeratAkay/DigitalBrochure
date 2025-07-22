@@ -39,6 +39,8 @@ export default function LogoUpload() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logos", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logos/active", user?.id] });
       toast({
         title: "Logo uploaded successfully",
         description: "Your logo is now available for use in brochures.",
@@ -69,7 +71,9 @@ export default function LogoUpload() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logos", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/logos/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/logos/active", user?.id] });
       toast({
         title: "Logo activated",
         description: "This logo is now your active company logo.",

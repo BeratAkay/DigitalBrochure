@@ -38,17 +38,17 @@ export default function BrochureEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const { data: templates = [] } = useQuery<Template[]>({
-    queryKey: ["/api/templates", { userId: user?.id }],
+    queryKey: ["/api/templates", user?.id],
     enabled: !!user,
   });
 
   const { data: logos = [] } = useQuery<Logo[]>({
-    queryKey: ["/api/logos", { userId: user?.id }],
+    queryKey: ["/api/logos", user?.id],
     enabled: !!user,
   });
 
   const { data: activeLogo } = useQuery<Logo | null>({
-    queryKey: ["/api/logos/active", { userId: user?.id }],
+    queryKey: ["/api/logos/active", user?.id],
     enabled: !!user,
   });
 
