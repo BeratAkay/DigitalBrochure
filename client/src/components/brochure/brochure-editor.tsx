@@ -38,17 +38,32 @@ export default function BrochureEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const { data: templates = [] } = useQuery<Template[]>({
-    queryKey: ["/api/templates", user?.id],
+    queryKey: ["/api/templates"],
+    queryFn: async () => {
+      const response = await fetch(`/api/templates?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
     enabled: !!user,
   });
 
   const { data: logos = [] } = useQuery<Logo[]>({
-    queryKey: ["/api/logos", user?.id],
+    queryKey: ["/api/logos"],
+    queryFn: async () => {
+      const response = await fetch(`/api/logos?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch logos');
+      return response.json();
+    },
     enabled: !!user,
   });
 
   const { data: activeLogo } = useQuery<Logo | null>({
-    queryKey: ["/api/logos/active", user?.id],
+    queryKey: ["/api/logos/active"],
+    queryFn: async () => {
+      const response = await fetch(`/api/logos/active?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch active logo');
+      return response.json();
+    },
     enabled: !!user,
   });
 

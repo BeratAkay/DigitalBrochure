@@ -16,7 +16,16 @@ export default function ProductSearch({ onProductSelect }: ProductSearchProps) {
   const [category, setCategory] = useState("all");
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", user?.id, { search: search || undefined, category: category !== "all" ? category : undefined }],
+    queryKey: ["/api/products", { search: search || undefined, category: category !== "all" ? category : undefined }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (category !== 'all') params.append('category', category);
+      
+      const response = await fetch(`/api/products?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
     enabled: !!user,
   });
 
