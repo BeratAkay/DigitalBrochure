@@ -1,4 +1,5 @@
 
 
 # DigitalBrochure
-# Versiyon2
+# Versiyon3
+# Ürünlere özellikler eklendi.
