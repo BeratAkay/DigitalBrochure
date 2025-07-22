@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BarChart3, Users, Calendar, Download, Plus, Edit, Trash2, Eye, FileText, Image } from "lucide-react";
+import { BarChart3, Users, Calendar, Download, Plus, Edit, Trash2, Eye, FileText, Image, Megaphone, PlayCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import type { Campaign } from "@shared/schema";
