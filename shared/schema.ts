@@ -42,6 +42,9 @@ export const campaignProducts = pgTable("campaign_products", {
   newPrice: real("new_price").notNull(),
   positionX: real("position_x").default(0),
   positionY: real("position_y").default(0),
+  scaleX: real("scale_x").default(1),
+  scaleY: real("scale_y").default(1),
+  pageNumber: integer("page_number").default(1),
 });
 
 export const templates = pgTable("templates", {
