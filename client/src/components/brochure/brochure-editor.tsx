@@ -1140,16 +1140,16 @@ export default function BrochureEditor({
                               )}
                             </div>
                             
-                            {/* Product Name and Price - Positioned to the right, slightly below product */}
-                            <div className="absolute -right-8 bottom-8 flex flex-col items-start">
+                            {/* Product Name and Price - Positioned to the right, aligned with bottom edge */}
+                            <div className="absolute -right-12 bottom-12 flex flex-col items-start">
                               {/* Product Name - Directly on brochure */}
-                              <h3 className="text-sm font-bold text-black mb-1">
+                              <h3 className="text-sm font-bold text-black mb-1 max-w-20 leading-tight">
                                 {item.product.name}
                               </h3>
                               
                               {/* Price Tag - Separate layout */}
-                              <div className={`px-3 py-1 shadow-lg relative ${
-                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-blue-600'
+                              <div className={`px-3 py-2 shadow-lg relative ${
+                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
                               }`}>
                                 {/* Discount Badge */}
                                 {item.discountPercent > 0 && (
