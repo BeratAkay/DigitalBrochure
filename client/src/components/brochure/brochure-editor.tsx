@@ -117,23 +117,23 @@ export default function BrochureEditor({
     if (productCount === 1) {
       gridCols = 1;
       gridRows = 1;
-      // Much larger for single product to fill space nicely
-      productSize = Math.min(280, availableWidth * 0.7, availableHeight * 0.6);
+      // Much larger for single product to fill most of the space
+      productSize = Math.min(320, availableWidth * 0.85, availableHeight * 0.7);
     } else if (productCount === 2) {
       gridCols = 2;
       gridRows = 1;
-      // Larger size for 2 products with proper spacing
-      productSize = Math.min(220, (availableWidth - 30) / 2);
+      // Significantly larger size for 2 products
+      productSize = Math.min(260, (availableWidth - 25) / 2);
     } else if (productCount === 3) {
       gridCols = 3;
       gridRows = 1;
-      // Good size for 3 products in a row
-      productSize = Math.min(180, (availableWidth - 60) / 3);
+      // Larger size for 3 products to fill more space
+      productSize = Math.min(200, (availableWidth - 50) / 3);
     } else if (productCount === 4) {
       gridCols = 2;
       gridRows = 2;
-      // Perfect 2x2 grid with good sizing
-      productSize = Math.min(170, Math.min((availableWidth - 30) / 2, (availableHeight - 30) / 2));
+      // Larger 2x2 grid with better space utilization
+      productSize = Math.min(190, Math.min((availableWidth - 25) / 2, (availableHeight - 25) / 2));
     } else if (productCount <= 6) {
       gridCols = 3;
       gridRows = 2;
@@ -1108,31 +1108,36 @@ export default function BrochureEditor({
                         
                         {/* Modern Supermarket Style Product Container */}
                         <div className="relative">
-                          {/* Dynamic Product Image Container - Adjusts size based on product count */}
+                          {/* Dynamic Product Image Container - No background, just the product */}
                           <div 
-                            className="product-card-modern bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden relative"
+                            className="product-card-modern overflow-hidden relative"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
-                              transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
+                              transition: isRotating || isResizing ? "none" : "transform 0.1s ease",
+                              background: 'transparent'
                             }}
                           >
                             {item.product.imageUrl ? (
                               <img
                                 src={item.product.imageUrl}
                                 alt={item.product.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
+                                style={{ 
+                                  background: 'transparent',
+                                  filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))'
+                                }}
                                 draggable={false}
                               />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                                <span className="text-gray-400 text-xs font-medium">No Image</span>
+                              <div className="w-full h-full bg-transparent flex items-center justify-center">
+                                <span className="text-gray-400 text-xs font-medium bg-white/80 px-2 py-1 rounded">No Image</span>
                               </div>
                             )}
                             
                             {/* Product overlay with pricing - Modern supermarket style */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 rounded-b-lg">
                               {/* Discount Badge in corner if applicable */}
                               {item.discountPercent > 0 && (
                                 <div className="discount-burst absolute -top-3 -right-1 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold transform rotate-12 shadow-lg">
