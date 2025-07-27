@@ -117,37 +117,49 @@ export default function BrochureEditor({
     if (productCount === 1) {
       gridCols = 1;
       gridRows = 1;
-      productSize = Math.min(200, availableWidth * 0.4);
+      // Much larger for single product to fill space nicely
+      productSize = Math.min(280, availableWidth * 0.7, availableHeight * 0.6);
     } else if (productCount === 2) {
       gridCols = 2;
       gridRows = 1;
-      productSize = Math.min(160, (availableWidth - 20) / 2); // 20px gap between products
+      // Larger size for 2 products with proper spacing
+      productSize = Math.min(220, (availableWidth - 30) / 2);
     } else if (productCount === 3) {
       gridCols = 3;
       gridRows = 1;
-      productSize = Math.min(140, (availableWidth - 40) / 3); // 20px gaps between products
+      // Good size for 3 products in a row
+      productSize = Math.min(180, (availableWidth - 60) / 3);
     } else if (productCount === 4) {
       gridCols = 2;
       gridRows = 2;
-      productSize = Math.min(140, Math.min((availableWidth - 20) / 2, (availableHeight - 20) / 2));
+      // Perfect 2x2 grid with good sizing
+      productSize = Math.min(170, Math.min((availableWidth - 30) / 2, (availableHeight - 30) / 2));
     } else if (productCount <= 6) {
       gridCols = 3;
       gridRows = 2;
-      productSize = Math.min(120, Math.min((availableWidth - 40) / 3, (availableHeight - 20) / 2));
+      // 3x2 grid with decent sizing
+      productSize = Math.min(150, Math.min((availableWidth - 60) / 3, (availableHeight - 30) / 2));
     } else if (productCount <= 9) {
       gridCols = 3;
       gridRows = 3;
-      productSize = Math.min(100, Math.min((availableWidth - 40) / 3, (availableHeight - 40) / 3));
+      // 3x3 grid with moderate sizing
+      productSize = Math.min(130, Math.min((availableWidth - 60) / 3, (availableHeight - 60) / 3));
+    } else if (productCount <= 12) {
+      gridCols = 4;
+      gridRows = 3;
+      // 4x3 grid for better organization
+      productSize = Math.min(110, Math.min((availableWidth - 90) / 4, (availableHeight - 60) / 3));
     } else {
       gridCols = 4;
       gridRows = Math.ceil(productCount / 4);
-      productSize = Math.min(90, Math.min((availableWidth - 60) / 4, (availableHeight - (gridRows - 1) * 20) / gridRows));
+      // Compact sizing for many products
+      productSize = Math.min(100, Math.min((availableWidth - 90) / 4, (availableHeight - (gridRows - 1) * 20) / gridRows));
     }
     
     return {
       gridCols,
       gridRows,
-      productSize: Math.max(80, productSize), // Minimum size constraint
+      productSize: Math.max(90, productSize), // Higher minimum size constraint
       availableWidth,
       availableHeight,
       marginX,
@@ -183,16 +195,18 @@ export default function BrochureEditor({
             const col = indexInPage % layout.gridCols;
             const row = Math.floor(indexInPage / layout.gridCols);
             
-            // Calculate precise positioning with proper gaps
-            const gapX = layout.gridCols > 1 ? (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1) : 0;
-            const gapY = layout.gridRows > 1 ? (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1) : 0;
+            // Calculate precise positioning with balanced gaps
+            const minGap = 20; // Minimum gap between products
+            const gapX = layout.gridCols > 1 ? Math.max(minGap, (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1)) : 0;
+            const gapY = layout.gridRows > 1 ? Math.max(minGap, (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1)) : 0;
             
             const actualSpaceX = layout.productSize + gapX;
             const actualSpaceY = layout.productSize + gapY;
             
-            // Center the grid if there are fewer products than grid capacity
+            // Center the grid for optimal visual balance
+            const actualRowsUsed = Math.ceil(productCount / layout.gridCols);
             const totalGridWidth = (layout.gridCols - 1) * actualSpaceX + layout.productSize;
-            const totalGridHeight = (layout.gridRows - 1) * actualSpaceY + layout.productSize;
+            const totalGridHeight = (actualRowsUsed - 1) * actualSpaceY + layout.productSize;
             const offsetX = (layout.availableWidth - totalGridWidth) / 2;
             const offsetY = (layout.availableHeight - totalGridHeight) / 2;
             
@@ -512,16 +526,18 @@ export default function BrochureEditor({
         const col = indexInPage % layout.gridCols;
         const row = Math.floor(indexInPage / layout.gridCols);
         
-        // Calculate precise positioning with proper gaps
-        const gapX = layout.gridCols > 1 ? (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1) : 0;
-        const gapY = layout.gridRows > 1 ? (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1) : 0;
+        // Calculate precise positioning with balanced gaps
+        const minGap = 20; // Minimum gap between products
+        const gapX = layout.gridCols > 1 ? Math.max(minGap, (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1)) : 0;
+        const gapY = layout.gridRows > 1 ? Math.max(minGap, (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1)) : 0;
         
         const actualSpaceX = layout.productSize + gapX;
         const actualSpaceY = layout.productSize + gapY;
         
-        // Center the grid if there are fewer products than grid capacity
+        // Center the grid for optimal visual balance
+        const actualRowsUsed = Math.ceil(itemsInPage / layout.gridCols);
         const totalGridWidth = (layout.gridCols - 1) * actualSpaceX + layout.productSize;
-        const totalGridHeight = (layout.gridRows - 1) * actualSpaceY + layout.productSize;
+        const totalGridHeight = (actualRowsUsed - 1) * actualSpaceY + layout.productSize;
         const offsetX = (layout.availableWidth - totalGridWidth) / 2;
         const offsetY = (layout.availableHeight - totalGridHeight) / 2;
         
