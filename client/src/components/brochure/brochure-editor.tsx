@@ -1106,16 +1106,20 @@ export default function BrochureEditor({
                           📄
                         </div>
                         
-                        {/* Product and Price Layout - Side by side, completely separate */}
-                        <div className="flex items-end gap-3">
-                          {/* Pure Product Image - Clean, no overlays */}
+                        {/* Product + Price Container - Single grouped layout */}
+                        <div 
+                          className="relative inline-block"
+                          style={{
+                            transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
+                            transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
+                          }}
+                        >
+                          {/* Pure Product Image - Clean container */}
                           <div 
                             className="relative"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
-                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
-                              transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
-                              transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
+                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`
                             }}
                           >
                             {item.product.imageUrl ? (
@@ -1138,15 +1142,14 @@ export default function BrochureEditor({
                             )}
                           </div>
                           
-                          {/* Separate Price Information Area */}
-                          <div className="flex flex-col items-start mb-4">
-                            {/* Product Name - Directly on brochure */}
-                            <h3 className="text-sm font-bold text-black mb-2 max-w-24 leading-tight">
+                          {/* Product Name - Above price tag */}
+                          <div className="absolute bottom-0 right-0 flex flex-col items-end translate-x-2 translate-y-2">
+                            <h3 className="text-xs font-bold text-black mb-1 text-right max-w-20 leading-tight bg-white/80 px-1 rounded">
                               {item.product.name}
                             </h3>
                             
-                            {/* Price Tag - Completely independent element */}
-                            <div className={`px-3 py-2 shadow-lg relative ${
+                            {/* Price Tag - Tightly positioned to bottom-right */}
+                            <div className={`px-2 py-1 shadow-lg relative ${
                               item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
                             }`}>
                               {/* Discount Badge */}
@@ -1163,7 +1166,7 @@ export default function BrochureEditor({
                                     ${item.product.originalPrice.toFixed(2)}
                                   </span>
                                 )}
-                                <span className="text-xl font-black text-white leading-none">
+                                <span className="text-lg font-black text-white leading-none">
                                   ${item.newPrice.toFixed(2)}
                                 </span>
                               </div>
