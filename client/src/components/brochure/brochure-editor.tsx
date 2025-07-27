@@ -105,6 +105,21 @@ export default function BrochureEditor({
     }
   }, [campaign]);
 
+  // Calculate dynamic product size based on product count per page
+  const calculateDynamicProductSize = (productCount: number) => {
+    const baseSize = 132;
+    
+    if (productCount <= 3) {
+      return Math.min(180, baseSize * 1.4); // Larger for fewer products
+    } else if (productCount <= 6) {
+      return baseSize; // Standard size
+    } else if (productCount <= 9) {
+      return Math.max(100, baseSize * 0.8); // Smaller for more products
+    } else {
+      return Math.max(80, baseSize * 0.6); // Even smaller for many products
+    }
+  };
+
   // Initialize product positions when selectedProducts change
   useEffect(() => {
     try {
@@ -114,18 +129,36 @@ export default function BrochureEditor({
       
       selectedProducts.forEach((item, index) => {
         if (!productPositions[item.id]) {
-          // Use saved position if available, otherwise arrange in a 3-column grid
+          // Use saved position if available, otherwise arrange in a dynamic grid
           if (item.positionX !== undefined && item.positionY !== undefined && item.positionX !== null && item.positionY !== null && (item.positionX !== 0 || item.positionY !== 0)) {
             newPositions[item.id] = {
               x: item.positionX,
               y: item.positionY,
             };
           } else {
-            const col = index % 3;
-            const row = Math.floor(index / 3);
+            // Dynamic grid calculation based on product count
+            const pageNumber = item.pageNumber || 1;
+            const pageProducts = selectedProducts.filter(p => (p.pageNumber || 1) === pageNumber);
+            const productCount = pageProducts.length;
+            const dynamicSize = calculateDynamicProductSize(productCount);
+            const gridCols = productCount <= 3 ? Math.min(3, productCount) : Math.min(4, Math.ceil(Math.sqrt(productCount)));
+            const indexInPage = pageProducts.findIndex(p => p.id === item.id);
+            const col = indexInPage % gridCols;
+            const row = Math.floor(indexInPage / gridCols);
+            
+            // Dynamic spacing based on product size and canvas dimensions
+            const canvasWidth = isDesignMode ? 400 : 600;
+            const canvasHeight = isDesignMode ? 533 : 800;
+            const marginX = 40;
+            const marginY = 150;
+            const availableWidth = canvasWidth - (2 * marginX);
+            const availableHeight = canvasHeight - marginY - 40;
+            const spaceX = availableWidth / gridCols;
+            const spaceY = availableHeight / Math.ceil(productCount / gridCols);
+            
             newPositions[item.id] = {
-              x: 50 + (col * 180), // 180px apart horizontally
-              y: 150 + (row * 200), // 200px apart vertically
+              x: marginX + (col * spaceX) + (spaceX - dynamicSize) / 2,
+              y: marginY + (row * spaceY) + (spaceY - dynamicSize) / 2
             };
           }
         } else {
@@ -411,7 +444,7 @@ export default function BrochureEditor({
     setIsCreateCampaignOpen(true);
   };
 
-  // FIXED: Auto Layout that preserves page assignments
+  // Enhanced Auto Layout with dynamic sizing based on product count
   const handleAutoLayout = () => {
     const newPositions: Record<number, { x: number; y: number }> = {};
     const newScales: Record<number, { scaleX: number; scaleY: number }> = {};
@@ -426,16 +459,18 @@ export default function BrochureEditor({
       productsByPage[pageNumber].push(item);
     });
     
-    // Arrange products within each page while preserving page assignments
+    // Arrange products within each page with dynamic sizing
     Object.entries(productsByPage).forEach(([pageNum, products]) => {
       const pageNumber = parseInt(pageNum);
       const itemsInPage = products.length;
-      const gridCols = Math.min(3, Math.ceil(Math.sqrt(itemsInPage)));
+      const dynamicSize = calculateDynamicProductSize(itemsInPage);
+      
+      // Dynamic grid calculation for better distribution
+      const gridCols = itemsInPage <= 3 ? Math.min(3, itemsInPage) : Math.min(4, Math.ceil(Math.sqrt(itemsInPage)));
       const gridRows = Math.ceil(itemsInPage / gridCols);
       
       const canvasWidth = isDesignMode ? 400 : 600;
       const canvasHeight = isDesignMode ? 533 : 800;
-      const productSize = 132;
       const marginX = 40;
       const marginY = 150;
       
@@ -449,11 +484,13 @@ export default function BrochureEditor({
         const row = Math.floor(indexInPage / gridCols);
         
         newPositions[item.id] = {
-          x: marginX + (col * spaceX) + (spaceX - productSize) / 2,
-          y: marginY + (row * spaceY) + (spaceY - productSize) / 2
+          x: marginX + (col * spaceX) + (spaceX - dynamicSize) / 2,
+          y: marginY + (row * spaceY) + (spaceY - dynamicSize) / 2
         };
         
-        newScales[item.id] = { scaleX: 1, scaleY: 1 };
+        // Apply dynamic scaling based on product count
+        const scaleFactor = dynamicSize / 132; // 132 is the base size
+        newScales[item.id] = { scaleX: scaleFactor, scaleY: scaleFactor };
       });
     });
     
@@ -462,8 +499,8 @@ export default function BrochureEditor({
     // Don't modify productPages - preserve user's page assignments
     
     toast({
-      title: "Auto Layout Applied",
-      description: "Products repositioned while preserving page assignments.",
+      title: "Dynamic Auto Layout Applied",
+      description: "Products resized and repositioned based on quantity for optimal visual balance.",
     });
   };
 
@@ -820,11 +857,12 @@ export default function BrochureEditor({
                             return `url(/uploads/${pageTemplate.filePath})`;
                           }
                         }
-                        // Fallback to global selected template or gradient
+                        // Fallback to global selected template or modern supermarket gradient
                         if (selectedTemplate && selectedTemplate.filePath) {
                           return `url(/uploads/${selectedTemplate.filePath})`;
                         }
-                        return 'linear-gradient(135deg, #60a5fa 0%, #a855f7 100%)';
+                        // Modern supermarket-style background inspired by the sample
+                        return 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 30%, #fde68a 100%)';
                       } catch (error) {
                         console.error('Error loading template:', error);
                         return 'linear-gradient(135deg, #60a5fa 0%, #a855f7 100%)';
@@ -903,7 +941,7 @@ export default function BrochureEditor({
               style={{ left: elementPositions.companyName.x, top: elementPositions.companyName.y }}
               onMouseDown={(e) => handleMouseDown('companyName', e)}
             >
-              <h1 className="text-2xl font-bold text-white drop-shadow-lg">
+              <h1 className="supermarket-title text-3xl font-black text-red-600 drop-shadow-lg">
                 {companyName}
               </h1>
             </div>
@@ -1012,12 +1050,14 @@ export default function BrochureEditor({
                           📄
                         </div>
                         
-                        {/* Main Product Container - Circular Market Style */}
+                        {/* Modern Supermarket Style Product Container */}
                         <div className="relative">
-                          {/* Circular Product Image - Only this part rotates and scales */}
+                          {/* Dynamic Product Image Container - Adjusts size based on product count */}
                           <div 
-                            className="w-32 h-32 rounded-full bg-white shadow-xl border-4 border-yellow-400 flex items-center justify-center overflow-hidden relative"
+                            className="product-card-modern bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden relative"
                             style={{
+                              width: `${calculateDynamicProductSize(pageProducts.length)}px`,
+                              height: `${calculateDynamicProductSize(pageProducts.length)}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                               transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
@@ -1034,36 +1074,48 @@ export default function BrochureEditor({
                                 <span className="text-gray-400 text-xs font-medium">No Image</span>
                               </div>
                             )}
-                          </div>
-                          
-                          {/* Discount Badge - Fixed position, doesn't rotate */}
-                          {item.discountPercent > 0 && (
-                            <div className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-10 h-10 flex flex-col items-center justify-center font-bold border-2 border-white shadow-lg">
-                              <span className="text-xs leading-none">{item.discountPercent}%</span>
-                              <span style={{ fontSize: '6px' }} className="leading-none">OFF</span>
-                            </div>
-                          )}
-                          
-                          {/* Product Name - Fixed position, doesn't rotate */}
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 text-center">
-                            <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200 min-w-max">
-                              <h3 className="font-bold text-sm text-gray-900 mb-1 whitespace-nowrap max-w-36 truncate">
+                            
+                            {/* Product overlay with pricing - Modern supermarket style */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                              {/* Discount Badge in corner if applicable */}
+                              {item.discountPercent > 0 && (
+                                <div className="discount-burst absolute -top-3 -right-1 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold transform rotate-12 shadow-lg">
+                                  -{item.discountPercent}%
+                                </div>
+                              )}
+                              
+                              {/* Product Name - Bold, small, black text */}
+                              <h3 className="text-xs font-bold text-white mb-1 leading-tight truncate">
                                 {item.product.name}
                               </h3>
                               
-                              {/* Price Display */}
-                              <div className="flex items-center justify-center space-x-2">
+                              {/* Price Display - More prominent */}
+                              <div className="flex items-center space-x-1">
                                 {item.discountPercent > 0 && (
-                                  <span className="text-xs text-gray-500 line-through">
+                                  <span className="text-xs text-gray-300 line-through">
                                     ${item.product.originalPrice.toFixed(2)}
                                   </span>
                                 )}
-                                <span className="text-base font-bold text-red-600">
+                                <span className="price-highlight text-lg font-extrabold text-yellow-400">
                                   ${item.newPrice.toFixed(2)}
                                 </span>
                               </div>
                             </div>
                           </div>
+                          
+                          {/* Additional supermarket-style promotional elements */}
+                          {item.discountPercent > 20 && (
+                            <div className="promo-badge absolute -top-2 -left-2 bg-yellow-400 text-black px-2 py-1 rounded-full text-xs font-black shadow-lg">
+                              SALE!
+                            </div>
+                          )}
+                          
+                          {/* Best Deal indicator for high discounts */}
+                          {item.discountPercent >= 30 && (
+                            <div className="promo-badge absolute -bottom-2 -left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-black shadow-lg">
+                              BEST DEAL!
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
