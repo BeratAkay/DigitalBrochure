@@ -1106,65 +1106,66 @@ export default function BrochureEditor({
                           📄
                         </div>
                         
-                        {/* Modern Supermarket Style Product Container */}
+                        {/* Product Container with separate pricing area */}
                         <div className="relative">
-                          {/* Product Container - Completely transparent, no background */}
+                          {/* Pure Product Image - No overlays */}
                           <div 
-                            className="relative"
+                            className="relative flex flex-col"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
-                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
+                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize + 60}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                               transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
                           >
-                            {/* Pure product image without any container */}
-                            {item.product.imageUrl ? (
-                              <img
-                                src={item.product.imageUrl}
-                                alt={item.product.name}
-                                className="w-full h-full object-contain"
-                                style={{ 
-                                  background: 'transparent',
-                                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
-                                }}
-                                draggable={false}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-gray-600 text-sm font-medium bg-yellow-100/90 px-3 py-2 rounded-lg shadow-sm">
-                                  No Image
-                                </span>
-                              </div>
-                            )}
-                            
-                            {/* Product Name - Positioned above product, directly on brochure */}
-                            <div className="absolute -top-6 left-0 right-0 text-center">
-                              <h3 className="text-sm font-bold text-black bg-white/90 px-2 py-1 rounded shadow-sm inline-block">
-                                {item.product.name}
-                              </h3>
+                            {/* Product Image */}
+                            <div className="flex-1">
+                              {item.product.imageUrl ? (
+                                <img
+                                  src={item.product.imageUrl}
+                                  alt={item.product.name}
+                                  className="w-full h-full object-contain"
+                                  style={{ 
+                                    background: 'transparent',
+                                    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
+                                  }}
+                                  draggable={false}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-gray-600 text-sm font-medium bg-yellow-100/90 px-3 py-2 rounded-lg shadow-sm">
+                                    No Image
+                                  </span>
+                                </div>
+                              )}
                             </div>
                             
-                            {/* Price Tag - Bottom-right corner without blocking product */}
-                            <div className="absolute bottom-0 right-0">
-                              <div className={`px-3 py-2 shadow-lg relative ${
-                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
+                            {/* Product Name and Price - Completely separate from product */}
+                            <div className="mt-2 flex flex-col items-end">
+                              {/* Product Name - Directly on brochure */}
+                              <h3 className="text-sm font-bold text-black mb-1 text-right">
+                                {item.product.name}
+                              </h3>
+                              
+                              {/* Price Tag - Separate layout */}
+                              <div className={`px-3 py-1 shadow-lg relative ${
+                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-blue-600'
                               }`}>
-                                {/* Discount Badge in corner */}
+                                {/* Discount Badge */}
                                 {item.discountPercent > 0 && (
                                   <div className="absolute -top-1 -right-1 bg-green-500 text-white px-1 py-0.5 rounded-sm text-xs font-bold">
                                     -{item.discountPercent}%
                                   </div>
                                 )}
                                 
-                                {/* Large Price Display */}
+                                {/* Price Display */}
                                 <div className="flex flex-col items-center">
                                   {item.discountPercent > 0 && (
                                     <span className="text-xs text-white line-through opacity-75">
                                       ${item.product.originalPrice.toFixed(2)}
                                     </span>
                                   )}
-                                  <span className="text-xl font-black text-white leading-none">
+                                  <span className="text-lg font-black text-white leading-none">
                                     ${item.newPrice.toFixed(2)}
                                   </span>
                                 </div>
