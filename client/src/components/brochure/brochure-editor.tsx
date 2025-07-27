@@ -1138,45 +1138,52 @@ export default function BrochureEditor({
                               </div>
                             )}
                             
-                            {/* Floating price label - Supermarket style */}
-                            <div className="absolute bottom-0 left-0 bg-blue-600 text-white px-3 py-2 rounded-tr-lg shadow-lg">
-                              {/* Discount Badge */}
-                              {item.discountPercent > 0 && (
-                                <div className="discount-burst absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                                  -{item.discountPercent}%
-                                </div>
-                              )}
+                            {/* Modern Supermarket Price Tag */}
+                            <div className="absolute bottom-0 left-0">
+                              {/* Product Name - Small, bold, black text above price */}
+                              <div className="bg-white px-2 py-1 mb-0 shadow-sm">
+                                <h3 className="text-xs font-bold text-black leading-tight truncate max-w-32">
+                                  {item.product.name}
+                                </h3>
+                              </div>
                               
-                              {/* Product Name - Bold and clear */}
-                              <h3 className="text-sm font-bold text-white mb-1 leading-tight">
-                                {item.product.name}
-                              </h3>
-                              
-                              {/* Price Display - Large and prominent */}
-                              <div className="flex items-center space-x-2">
+                              {/* Price Tag - Red/Yellow background with large white price */}
+                              <div className={`px-4 py-2 shadow-lg relative ${
+                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
+                              }`}>
+                                {/* Discount Badge in corner */}
                                 {item.discountPercent > 0 && (
-                                  <span className="text-xs text-gray-200 line-through">
-                                    ${item.product.originalPrice.toFixed(2)}
-                                  </span>
+                                  <div className="absolute -top-1 -right-1 bg-green-500 text-white px-1 py-0.5 rounded-sm text-xs font-bold">
+                                    -{item.discountPercent}%
+                                  </div>
                                 )}
-                                <span className="text-2xl font-black text-yellow-300">
-                                  ${item.newPrice.toFixed(2)}
-                                </span>
+                                
+                                {/* Large Price Display */}
+                                <div className="flex flex-col items-start">
+                                  {item.discountPercent > 0 && (
+                                    <span className="text-xs text-white line-through opacity-75">
+                                      ${item.product.originalPrice.toFixed(2)}
+                                    </span>
+                                  )}
+                                  <span className="text-2xl font-black text-white leading-none">
+                                    ${item.newPrice.toFixed(2)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
                           
-                          {/* Additional supermarket-style promotional elements */}
+                          {/* Turkish Supermarket Style Promotional Elements */}
                           {item.discountPercent > 20 && (
-                            <div className="promo-badge absolute -top-2 -left-2 bg-yellow-400 text-black px-2 py-1 rounded-full text-xs font-black shadow-lg">
-                              SALE!
+                            <div className="absolute -top-3 -right-3 bg-orange-500 text-white px-3 py-2 rounded-full text-xs font-black shadow-lg transform rotate-12 z-10">
+                              FIRSAT!
                             </div>
                           )}
                           
-                          {/* Best Deal indicator for high discounts */}
-                          {item.discountPercent >= 30 && (
-                            <div className="promo-badge absolute -bottom-2 -left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-black shadow-lg">
-                              BEST DEAL!
+                          {/* Special offer badge for very high discounts */}
+                          {item.discountPercent > 40 && (
+                            <div className="absolute top-0 left-0 bg-red-600 text-white px-2 py-1 text-xs font-bold shadow-lg">
+                              ÇOK UCUZ
                             </div>
                           )}
                         </div>
