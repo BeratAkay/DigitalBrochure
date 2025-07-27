@@ -105,19 +105,54 @@ export default function BrochureEditor({
     }
   }, [campaign]);
 
-  // Calculate dynamic product size based on product count per page
-  const calculateDynamicProductSize = (productCount: number) => {
-    const baseSize = 132;
+  // Calculate dynamic product size and layout based on product count per page
+  const calculateDynamicLayout = (productCount: number, canvasWidth: number, canvasHeight: number) => {
+    const marginX = 40;
+    const marginY = 150;
+    const availableWidth = canvasWidth - (2 * marginX);
+    const availableHeight = canvasHeight - marginY - 80; // Extra bottom margin for text
     
-    if (productCount <= 3) {
-      return Math.min(180, baseSize * 1.4); // Larger for fewer products
+    let gridCols, gridRows, productSize;
+    
+    if (productCount === 1) {
+      gridCols = 1;
+      gridRows = 1;
+      productSize = Math.min(200, availableWidth * 0.4);
+    } else if (productCount === 2) {
+      gridCols = 2;
+      gridRows = 1;
+      productSize = Math.min(160, (availableWidth - 20) / 2); // 20px gap between products
+    } else if (productCount === 3) {
+      gridCols = 3;
+      gridRows = 1;
+      productSize = Math.min(140, (availableWidth - 40) / 3); // 20px gaps between products
+    } else if (productCount === 4) {
+      gridCols = 2;
+      gridRows = 2;
+      productSize = Math.min(140, Math.min((availableWidth - 20) / 2, (availableHeight - 20) / 2));
     } else if (productCount <= 6) {
-      return baseSize; // Standard size
+      gridCols = 3;
+      gridRows = 2;
+      productSize = Math.min(120, Math.min((availableWidth - 40) / 3, (availableHeight - 20) / 2));
     } else if (productCount <= 9) {
-      return Math.max(100, baseSize * 0.8); // Smaller for more products
+      gridCols = 3;
+      gridRows = 3;
+      productSize = Math.min(100, Math.min((availableWidth - 40) / 3, (availableHeight - 40) / 3));
     } else {
-      return Math.max(80, baseSize * 0.6); // Even smaller for many products
+      gridCols = 4;
+      gridRows = Math.ceil(productCount / 4);
+      productSize = Math.min(90, Math.min((availableWidth - 60) / 4, (availableHeight - (gridRows - 1) * 20) / gridRows));
     }
+    
+    return {
+      gridCols,
+      gridRows,
+      productSize: Math.max(80, productSize), // Minimum size constraint
+      availableWidth,
+      availableHeight,
+      marginX,
+      marginY
+    };
   };
 
   // Initialize product positions when selectedProducts change
@@ -136,29 +171,34 @@ export default function BrochureEditor({
               y: item.positionY,
             };
           } else {
-            // Dynamic grid calculation based on product count
+            // Dynamic layout calculation based on product count
             const pageNumber = item.pageNumber || 1;
             const pageProducts = selectedProducts.filter(p => (p.pageNumber || 1) === pageNumber);
             const productCount = pageProducts.length;
-            const dynamicSize = calculateDynamicProductSize(productCount);
-            const gridCols = productCount <= 3 ? Math.min(3, productCount) : Math.min(4, Math.ceil(Math.sqrt(productCount)));
-            const indexInPage = pageProducts.findIndex(p => p.id === item.id);
-            const col = indexInPage % gridCols;
-            const row = Math.floor(indexInPage / gridCols);
-            
-            // Dynamic spacing based on product size and canvas dimensions
             const canvasWidth = isDesignMode ? 400 : 600;
             const canvasHeight = isDesignMode ? 533 : 800;
-            const marginX = 40;
-            const marginY = 150;
-            const availableWidth = canvasWidth - (2 * marginX);
-            const availableHeight = canvasHeight - marginY - 40;
-            const spaceX = availableWidth / gridCols;
-            const spaceY = availableHeight / Math.ceil(productCount / gridCols);
+            
+            const layout = calculateDynamicLayout(productCount, canvasWidth, canvasHeight);
+            const indexInPage = pageProducts.findIndex(p => p.id === item.id);
+            const col = indexInPage % layout.gridCols;
+            const row = Math.floor(indexInPage / layout.gridCols);
+            
+            // Calculate precise positioning with proper gaps
+            const gapX = layout.gridCols > 1 ? (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1) : 0;
+            const gapY = layout.gridRows > 1 ? (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1) : 0;
+            
+            const actualSpaceX = layout.productSize + gapX;
+            const actualSpaceY = layout.productSize + gapY;
+            
+            // Center the grid if there are fewer products than grid capacity
+            const totalGridWidth = (layout.gridCols - 1) * actualSpaceX + layout.productSize;
+            const totalGridHeight = (layout.gridRows - 1) * actualSpaceY + layout.productSize;
+            const offsetX = (layout.availableWidth - totalGridWidth) / 2;
+            const offsetY = (layout.availableHeight - totalGridHeight) / 2;
             
             newPositions[item.id] = {
-              x: marginX + (col * spaceX) + (spaceX - dynamicSize) / 2,
-              y: marginY + (row * spaceY) + (spaceY - dynamicSize) / 2
+              x: layout.marginX + offsetX + (col * actualSpaceX),
+              y: layout.marginY + offsetY + (row * actualSpaceY)
             };
           }
         } else {
@@ -444,7 +484,7 @@ export default function BrochureEditor({
     setIsCreateCampaignOpen(true);
   };
 
-  // Enhanced Auto Layout with dynamic sizing based on product count
+  // Enhanced Auto Layout with precise dynamic sizing and positioning
   const handleAutoLayout = () => {
     const newPositions: Record<number, { x: number; y: number }> = {};
     const newScales: Record<number, { scaleX: number; scaleY: number }> = {};
@@ -459,48 +499,48 @@ export default function BrochureEditor({
       productsByPage[pageNumber].push(item);
     });
     
-    // Arrange products within each page with dynamic sizing
+    // Arrange products within each page with precise dynamic layout
     Object.entries(productsByPage).forEach(([pageNum, products]) => {
       const pageNumber = parseInt(pageNum);
       const itemsInPage = products.length;
-      const dynamicSize = calculateDynamicProductSize(itemsInPage);
-      
-      // Dynamic grid calculation for better distribution
-      const gridCols = itemsInPage <= 3 ? Math.min(3, itemsInPage) : Math.min(4, Math.ceil(Math.sqrt(itemsInPage)));
-      const gridRows = Math.ceil(itemsInPage / gridCols);
-      
       const canvasWidth = isDesignMode ? 400 : 600;
       const canvasHeight = isDesignMode ? 533 : 800;
-      const marginX = 40;
-      const marginY = 150;
       
-      const availableWidth = canvasWidth - (2 * marginX);
-      const availableHeight = canvasHeight - marginY - 40;
-      const spaceX = availableWidth / gridCols;
-      const spaceY = availableHeight / gridRows;
+      const layout = calculateDynamicLayout(itemsInPage, canvasWidth, canvasHeight);
       
       products.forEach((item, indexInPage) => {
-        const col = indexInPage % gridCols;
-        const row = Math.floor(indexInPage / gridCols);
+        const col = indexInPage % layout.gridCols;
+        const row = Math.floor(indexInPage / layout.gridCols);
+        
+        // Calculate precise positioning with proper gaps
+        const gapX = layout.gridCols > 1 ? (layout.availableWidth - (layout.gridCols * layout.productSize)) / (layout.gridCols - 1) : 0;
+        const gapY = layout.gridRows > 1 ? (layout.availableHeight - (layout.gridRows * layout.productSize)) / (layout.gridRows - 1) : 0;
+        
+        const actualSpaceX = layout.productSize + gapX;
+        const actualSpaceY = layout.productSize + gapY;
+        
+        // Center the grid if there are fewer products than grid capacity
+        const totalGridWidth = (layout.gridCols - 1) * actualSpaceX + layout.productSize;
+        const totalGridHeight = (layout.gridRows - 1) * actualSpaceY + layout.productSize;
+        const offsetX = (layout.availableWidth - totalGridWidth) / 2;
+        const offsetY = (layout.availableHeight - totalGridHeight) / 2;
         
         newPositions[item.id] = {
-          x: marginX + (col * spaceX) + (spaceX - dynamicSize) / 2,
-          y: marginY + (row * spaceY) + (spaceY - dynamicSize) / 2
+          x: layout.marginX + offsetX + (col * actualSpaceX),
+          y: layout.marginY + offsetY + (row * actualSpaceY)
         };
         
-        // Apply dynamic scaling based on product count
-        const scaleFactor = dynamicSize / 132; // 132 is the base size
-        newScales[item.id] = { scaleX: scaleFactor, scaleY: scaleFactor };
+        // Reset scaling to 1 since we handle size dynamically in render
+        newScales[item.id] = { scaleX: 1, scaleY: 1 };
       });
     });
     
     setProductPositions(newPositions);
     setProductScales(newScales);
-    // Don't modify productPages - preserve user's page assignments
     
     toast({
-      title: "Dynamic Auto Layout Applied",
-      description: "Products resized and repositioned based on quantity for optimal visual balance.",
+      title: "Smart Layout Applied",
+      description: "Products automatically arranged with optimal sizing and spacing for perfect visual balance.",
     });
   };
 
@@ -1056,8 +1096,8 @@ export default function BrochureEditor({
                           <div 
                             className="product-card-modern bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden relative"
                             style={{
-                              width: `${calculateDynamicProductSize(pageProducts.length)}px`,
-                              height: `${calculateDynamicProductSize(pageProducts.length)}px`,
+                              width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
+                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                               transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
