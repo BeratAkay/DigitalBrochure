@@ -1106,11 +1106,11 @@ export default function BrochureEditor({
                           📄
                         </div>
                         
-                        {/* Product Container with separate pricing area */}
-                        <div className="relative">
-                          {/* Pure Product Image - No overlays */}
+                        {/* Product and Price Layout - Side by side, completely separate */}
+                        <div className="flex items-end gap-3">
+                          {/* Pure Product Image - Clean, no overlays */}
                           <div 
-                            className="relative flex flex-col"
+                            className="relative"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
@@ -1118,71 +1118,70 @@ export default function BrochureEditor({
                               transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
                           >
-                            {/* Product Image */}
-                            <div className="flex-1">
-                              {item.product.imageUrl ? (
-                                <img
-                                  src={item.product.imageUrl}
-                                  alt={item.product.name}
-                                  className="w-full h-full object-contain"
-                                  style={{ 
-                                    background: 'transparent',
-                                    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
-                                  }}
-                                  draggable={false}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <span className="text-gray-600 text-sm font-medium bg-yellow-100/90 px-3 py-2 rounded-lg shadow-sm">
-                                    No Image
-                                  </span>
+                            {item.product.imageUrl ? (
+                              <img
+                                src={item.product.imageUrl}
+                                alt={item.product.name}
+                                className="w-full h-full object-contain"
+                                style={{ 
+                                  background: 'transparent',
+                                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
+                                }}
+                                draggable={false}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-gray-600 text-sm font-medium bg-yellow-100/90 px-3 py-2 rounded-lg shadow-sm">
+                                  No Image
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Separate Price Information Area */}
+                          <div className="flex flex-col items-start mb-4">
+                            {/* Product Name - Directly on brochure */}
+                            <h3 className="text-sm font-bold text-black mb-2 max-w-24 leading-tight">
+                              {item.product.name}
+                            </h3>
+                            
+                            {/* Price Tag - Completely independent element */}
+                            <div className={`px-3 py-2 shadow-lg relative ${
+                              item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
+                            }`}>
+                              {/* Discount Badge */}
+                              {item.discountPercent > 0 && (
+                                <div className="absolute -top-1 -right-1 bg-green-500 text-white px-1 py-0.5 rounded-sm text-xs font-bold">
+                                  -{item.discountPercent}%
                                 </div>
                               )}
-                            </div>
-                            
-                            {/* Product Name and Price - Positioned to the right, aligned with bottom edge */}
-                            <div className="absolute -right-12 bottom-12 flex flex-col items-start">
-                              {/* Product Name - Directly on brochure */}
-                              <h3 className="text-sm font-bold text-black mb-1 max-w-20 leading-tight">
-                                {item.product.name}
-                              </h3>
                               
-                              {/* Price Tag - Separate layout */}
-                              <div className={`px-3 py-2 shadow-lg relative ${
-                                item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
-                              }`}>
-                                {/* Discount Badge */}
+                              {/* Price Display */}
+                              <div className="flex flex-col items-center">
                                 {item.discountPercent > 0 && (
-                                  <div className="absolute -top-1 -right-1 bg-green-500 text-white px-1 py-0.5 rounded-sm text-xs font-bold">
-                                    -{item.discountPercent}%
-                                  </div>
-                                )}
-                                
-                                {/* Price Display */}
-                                <div className="flex flex-col items-center">
-                                  {item.discountPercent > 0 && (
-                                    <span className="text-xs text-white line-through opacity-75">
-                                      ${item.product.originalPrice.toFixed(2)}
-                                    </span>
-                                  )}
-                                  <span className="text-lg font-black text-white leading-none">
-                                    ${item.newPrice.toFixed(2)}
+                                  <span className="text-xs text-white line-through opacity-75">
+                                    ${item.product.originalPrice.toFixed(2)}
                                   </span>
-                                </div>
+                                )}
+                                <span className="text-xl font-black text-white leading-none">
+                                  ${item.newPrice.toFixed(2)}
+                                </span>
                               </div>
                             </div>
                           </div>
-                          
-                          {/* Turkish Supermarket Style Promotional Elements */}
+                        </div>
+                        
+                        {/* Turkish Supermarket Style Promotional Elements */}
+                        <div className="absolute -top-3 -right-3 z-10">
                           {item.discountPercent > 20 && (
-                            <div className="absolute -top-3 -right-3 bg-orange-500 text-white px-3 py-2 rounded-full text-xs font-black shadow-lg transform rotate-12 z-10">
+                            <div className="bg-orange-500 text-white px-3 py-2 rounded-full text-xs font-black shadow-lg transform rotate-12">
                               FIRSAT!
                             </div>
                           )}
                           
                           {/* Special offer badge for very high discounts */}
                           {item.discountPercent > 40 && (
-                            <div className="absolute top-0 left-0 bg-red-600 text-white px-2 py-1 text-xs font-bold shadow-lg">
+                            <div className="bg-red-600 text-white px-2 py-1 text-xs font-bold shadow-lg mt-1">
                               ÇOK UCUZ
                             </div>
                           )}
