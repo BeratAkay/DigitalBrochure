@@ -1138,17 +1138,16 @@ export default function BrochureEditor({
                               </div>
                             )}
                             
-                            {/* Modern Supermarket Price Tag */}
-                            <div className="absolute bottom-0 left-0">
-                              {/* Product Name - Small, bold, black text above price */}
-                              <div className="bg-white px-2 py-1 mb-0 shadow-sm">
-                                <h3 className="text-xs font-bold text-black leading-tight truncate max-w-32">
-                                  {item.product.name}
-                                </h3>
-                              </div>
-                              
-                              {/* Price Tag - Red/Yellow background with large white price */}
-                              <div className={`px-4 py-2 shadow-lg relative ${
+                            {/* Product Name - Positioned above product, directly on brochure */}
+                            <div className="absolute -top-6 left-0 right-0 text-center">
+                              <h3 className="text-sm font-bold text-black bg-white/90 px-2 py-1 rounded shadow-sm inline-block">
+                                {item.product.name}
+                              </h3>
+                            </div>
+                            
+                            {/* Price Tag - Bottom-right corner without blocking product */}
+                            <div className="absolute bottom-0 right-0">
+                              <div className={`px-3 py-2 shadow-lg relative ${
                                 item.discountPercent > 0 ? 'bg-red-500' : 'bg-yellow-500'
                               }`}>
                                 {/* Discount Badge in corner */}
@@ -1159,13 +1158,13 @@ export default function BrochureEditor({
                                 )}
                                 
                                 {/* Large Price Display */}
-                                <div className="flex flex-col items-start">
+                                <div className="flex flex-col items-center">
                                   {item.discountPercent > 0 && (
                                     <span className="text-xs text-white line-through opacity-75">
                                       ${item.product.originalPrice.toFixed(2)}
                                     </span>
                                   )}
-                                  <span className="text-2xl font-black text-white leading-none">
+                                  <span className="text-xl font-black text-white leading-none">
                                     ${item.newPrice.toFixed(2)}
                                   </span>
                                 </div>
