@@ -117,23 +117,23 @@ export default function BrochureEditor({
     if (productCount === 1) {
       gridCols = 1;
       gridRows = 1;
-      // Much larger for single product to fill most of the space
-      productSize = Math.min(320, availableWidth * 0.85, availableHeight * 0.7);
+      // Maximum size for single product to fully utilize space
+      productSize = Math.min(380, availableWidth * 0.9, availableHeight * 0.8);
     } else if (productCount === 2) {
       gridCols = 2;
       gridRows = 1;
-      // Significantly larger size for 2 products
-      productSize = Math.min(260, (availableWidth - 25) / 2);
+      // Very large size for 2 products to fill most of the width
+      productSize = Math.min(300, (availableWidth - 20) / 2);
     } else if (productCount === 3) {
       gridCols = 3;
       gridRows = 1;
-      // Larger size for 3 products to fill more space
-      productSize = Math.min(200, (availableWidth - 50) / 3);
+      // Large size for 3 products to fill the width completely
+      productSize = Math.min(240, (availableWidth - 40) / 3);
     } else if (productCount === 4) {
       gridCols = 2;
       gridRows = 2;
-      // Larger 2x2 grid with better space utilization
-      productSize = Math.min(190, Math.min((availableWidth - 25) / 2, (availableHeight - 25) / 2));
+      // Large 2x2 grid filling most of the available space
+      productSize = Math.min(220, Math.min((availableWidth - 20) / 2, (availableHeight - 20) / 2));
     } else if (productCount <= 6) {
       gridCols = 3;
       gridRows = 2;
@@ -1108,17 +1108,17 @@ export default function BrochureEditor({
                         
                         {/* Modern Supermarket Style Product Container */}
                         <div className="relative">
-                          {/* Dynamic Product Image Container - No background, just the product */}
+                          {/* Product Container - Completely transparent, no background */}
                           <div 
-                            className="product-card-modern overflow-hidden relative"
+                            className="relative"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
-                              transition: isRotating || isResizing ? "none" : "transform 0.1s ease",
-                              background: 'transparent'
+                              transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
                           >
+                            {/* Pure product image without any container */}
                             {item.product.imageUrl ? (
                               <img
                                 src={item.product.imageUrl}
@@ -1126,38 +1126,40 @@ export default function BrochureEditor({
                                 className="w-full h-full object-contain"
                                 style={{ 
                                   background: 'transparent',
-                                  filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))'
+                                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
                                 }}
                                 draggable={false}
                               />
                             ) : (
-                              <div className="w-full h-full bg-transparent flex items-center justify-center">
-                                <span className="text-gray-400 text-xs font-medium bg-white/80 px-2 py-1 rounded">No Image</span>
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-gray-600 text-sm font-medium bg-yellow-100/90 px-3 py-2 rounded-lg shadow-sm">
+                                  No Image
+                                </span>
                               </div>
                             )}
                             
-                            {/* Product overlay with pricing - Modern supermarket style */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 rounded-b-lg">
-                              {/* Discount Badge in corner if applicable */}
+                            {/* Floating price label - Supermarket style */}
+                            <div className="absolute bottom-0 left-0 bg-blue-600 text-white px-3 py-2 rounded-tr-lg shadow-lg">
+                              {/* Discount Badge */}
                               {item.discountPercent > 0 && (
-                                <div className="discount-burst absolute -top-3 -right-1 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold transform rotate-12 shadow-lg">
+                                <div className="discount-burst absolute -top-2 -right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
                                   -{item.discountPercent}%
                                 </div>
                               )}
                               
-                              {/* Product Name - Bold, small, black text */}
-                              <h3 className="text-xs font-bold text-white mb-1 leading-tight truncate">
+                              {/* Product Name - Bold and clear */}
+                              <h3 className="text-sm font-bold text-white mb-1 leading-tight">
                                 {item.product.name}
                               </h3>
                               
-                              {/* Price Display - More prominent */}
-                              <div className="flex items-center space-x-1">
+                              {/* Price Display - Large and prominent */}
+                              <div className="flex items-center space-x-2">
                                 {item.discountPercent > 0 && (
-                                  <span className="text-xs text-gray-300 line-through">
+                                  <span className="text-xs text-gray-200 line-through">
                                     ${item.product.originalPrice.toFixed(2)}
                                   </span>
                                 )}
-                                <span className="price-highlight text-lg font-extrabold text-yellow-400">
+                                <span className="text-2xl font-black text-yellow-300">
                                   ${item.newPrice.toFixed(2)}
                                 </span>
                               </div>
