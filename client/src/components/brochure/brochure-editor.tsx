@@ -1113,7 +1113,7 @@ export default function BrochureEditor({
                             className="relative flex flex-col"
                             style={{
                               width: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
-                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize + 60}px`,
+                              height: `${calculateDynamicLayout(pageProducts.length, isDesignMode ? 400 : 600, isDesignMode ? 533 : 800).productSize}px`,
                               transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                               transition: isRotating || isResizing ? "none" : "transform 0.1s ease"
                             }}
@@ -1140,10 +1140,10 @@ export default function BrochureEditor({
                               )}
                             </div>
                             
-                            {/* Product Name and Price - Completely separate from product */}
-                            <div className="mt-2 flex flex-col items-end">
+                            {/* Product Name and Price - Positioned to the right, slightly below product */}
+                            <div className="absolute -right-8 bottom-8 flex flex-col items-start">
                               {/* Product Name - Directly on brochure */}
-                              <h3 className="text-sm font-bold text-black mb-1 text-right">
+                              <h3 className="text-sm font-bold text-black mb-1">
                                 {item.product.name}
                               </h3>
                               
