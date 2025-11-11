@@ -2066,12 +2066,12 @@ export default function BrochureEditor({
                                   : "text-[10px]";
                               const badgeSize =
                                 productCount === 1
-                                  ? "w-14 h-14 text-lg"
+                                  ? "w-11 h-11 text-base"
                                   : productCount <= 3
-                                  ? "w-12 h-12 text-base"
+                                  ? "w-9 h-9 text-sm"
                                   : productCount <= 6
-                                  ? "w-10 h-10 text-sm"
-                                  : "w-9 h-9 text-xs";
+                                  ? "w-8 h-8 text-xs"
+                                  : "w-7 h-7 text-[10px]";
                               const pricePadding =
                                 productCount === 1
                                   ? "px-4 py-2"
@@ -2104,8 +2104,8 @@ export default function BrochureEditor({
                                           className={`${badgeSize} bg-gradient-to-br from-yellow-400 to-yellow-500 text-red-700 rounded-full flex items-center justify-center font-black shadow-md border-2 border-yellow-600 absolute z-10`}
                                           style={{
                                             textShadow: "0px 0px 2px rgba(255,255,255,0.9)",
-                                            top: "-6px",
-                                            right: "-6px",
+                                            top: "-22px",
+                                            right: "2px",
                                             fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
                                             fontWeight: 900
                                           }}
