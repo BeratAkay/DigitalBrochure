@@ -1,0 +1,10 @@
+[
+  {
+    "id": 5,
+    "name": "Electrikli Bisiklet",
+    "description": "elektrik",
+    "originalPrice": 455,
+    "category": "Electronics",
+    "imageUrl": "/public/assets/electrikli_bisiklet_1762776389553.JPG"
+  }
+]
