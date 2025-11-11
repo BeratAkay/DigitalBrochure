@@ -53,7 +53,7 @@ export default function CreateCampaign() {
   >({});
 
   // Check if we're editing an existing campaign
-  const urlParams = new URLSearchParams(location.split("?")[1] || "");
+  const urlParams = new URLSearchParams(window.location.search);
   const campaignId = urlParams.get("campaignId");
   const isEditing = !!campaignId;
 

@@ -6,5 +6,29 @@
     "originalPrice": 455,
     "category": "Electronics",
     "imageUrl": "/public/assets/electrikli_bisiklet_1762776389553.JPG"
+  },
+  {
+    "id": 5,
+    "name": "muz",
+    "description": null,
+    "originalPrice": 10,
+    "category": "",
+    "imageUrl": "/public/assets/muz_1762859950252.png"
+  },
+  {
+    "id": 6,
+    "name": "domates",
+    "description": null,
+    "originalPrice": 5,
+    "category": "",
+    "imageUrl": "/public/assets/domates_1762859970511.png"
+  },
+  {
+    "id": 7,
+    "name": "maydonoz",
+    "description": null,
+    "originalPrice": 15,
+    "category": "",
+    "imageUrl": "/public/assets/maydonoz_1762859990784.png"
   }
 ]

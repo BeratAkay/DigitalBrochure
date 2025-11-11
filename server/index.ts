@@ -66,7 +66,7 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || "5000", 10);
   const listenOptions: any = {
     port,
-    host: "127.0.0.1",
+    host: "0.0.0.0",
   };
 
   // reusePort is not supported on Windows; enable only when supported

@@ -2002,7 +2002,7 @@ export default function BrochureEditor({
                               className="relative flex items-center justify-center"
                               style={{
                                 width: `${grid.cells[cellIndex].innerWidth}px`,
-                                height: `${grid.cells[cellIndex].innerHeight}px`,
+                                height: `${grid.cells[cellIndex].innerHeight - 60}px`,
                                 transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                                 transition:
                                   isRotating || isResizing
@@ -2039,119 +2039,115 @@ export default function BrochureEditor({
                               )}
                             </div>
 
-                            {/* Header: Product Name (top-center inside cell) - Dynamic size based on product count */}
+                            {/* Fixed Grid Layout: Product Name + Price + Discount Badge at Bottom */}
                             {(() => {
                               const productCount = pageProducts.length;
                               const nameSizeClass =
                                 productCount === 1
-                                  ? "text-lg"
+                                  ? "text-xs"
                                   : productCount <= 3
-                                  ? "text-base"
+                                  ? "text-[11px]"
                                   : productCount <= 6
-                                  ? "text-sm"
-                                  : "text-xs";
-                              const nameTop =
-                                productCount === 1 ? "top-1" : "top-2";
-
-                              return (
-                                <div
-                                  className={`absolute left-0 right-0 ${nameTop} px-2`}
-                                >
-                                  <h3
-                                    className={`${nameSizeClass} font-bold text-gray-900 text-center truncate`}
-                                  >
-                                    {(item as any).displayName ??
-                                      item.product.name}
-                                  </h3>
-                                </div>
-                              );
-                            })()}
-
-                            {/* Modern Turkish Supermarket Style Price Tag - Red background with yellow text */}
-                            {(() => {
-                              const productCount = pageProducts.length;
+                                  ? "text-[10px]"
+                                  : "text-[9px]";
                               const priceSizeClass =
                                 productCount === 1
-                                  ? "text-3xl"
-                                  : productCount <= 3
                                   ? "text-2xl"
-                                  : productCount <= 6
+                                  : productCount <= 3
                                   ? "text-xl"
-                                  : "text-lg";
+                                  : productCount <= 6
+                                  ? "text-lg"
+                                  : "text-base";
                               const oldPriceSizeClass =
                                 productCount === 1
-                                  ? "text-base"
-                                  : productCount <= 3
                                   ? "text-sm"
-                                  : "text-xs";
-                              const discountBadgeSize =
-                                productCount === 1
-                                  ? "w-14 h-14 text-base"
                                   : productCount <= 3
-                                  ? "w-12 h-12 text-sm"
-                                  : "w-10 h-10 text-xs";
-                              const pricePadding =
-                                productCount === 1
-                                  ? "px-5 py-3"
-                                  : productCount <= 3
-                                  ? "px-4 py-2.5"
-                                  : "px-3 py-2";
-                              const priceBottom =
-                                productCount === 1 ? "bottom-1" : "bottom-2";
-
-                              return (
-                                <div
-                                  className={`absolute ${priceBottom} left-2 right-2 flex flex-col items-center gap-1`}
-                                >
-                                  {/* Old Price (if discount exists) */}
-                                  {item.discountPercent > 0 && (
-                                    <div
-                                      className={`${oldPriceSizeClass} font-bold text-gray-700 bg-white/95 px-3 py-1 rounded-md line-through shadow-sm`}
-                                    >
-                                      {(
-                                        (item as any).originalPriceOverride ??
-                                        item.product.originalPrice
-                                      ).toFixed(2)} TL
-                                    </div>
-                                  )}
-                                  
-                                  {/* New Price with Red Background and Yellow Text */}
-                                  <div className="relative inline-block">
-                                    <div
-                                      className={`${pricePadding} bg-gradient-to-br from-red-600 to-red-700 text-yellow-400 shadow-xl rounded-lg ${priceSizeClass} font-black border-2 border-red-800`}
-                                      style={{
-                                        textShadow: "1px 1px 2px rgba(0,0,0,0.5)"
-                                      }}
-                                    >
-                                      {item.newPrice.toFixed(2)} ₺
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Turkish Supermarket Style Promotional Elements - Yellow badge with red text */}
-                          <div className="absolute top-0 right-0 z-20">
-                            {item.discountPercent > 0 && (() => {
-                              const productCount = pageProducts.length;
+                                  ? "text-xs"
+                                  : "text-[10px]";
                               const badgeSize =
                                 productCount === 1
-                                  ? "w-16 h-16 text-lg"
+                                  ? "w-14 h-14 text-lg"
                                   : productCount <= 3
-                                  ? "w-14 h-14 text-base"
+                                  ? "w-12 h-12 text-base"
                                   : productCount <= 6
-                                  ? "w-12 h-12 text-sm"
-                                  : "w-10 h-10 text-xs";
-                              
+                                  ? "w-10 h-10 text-sm"
+                                  : "w-9 h-9 text-xs";
+                              const pricePadding =
+                                productCount === 1
+                                  ? "px-4 py-2"
+                                  : productCount <= 3
+                                  ? "px-3 py-1.5"
+                                  : "px-2 py-1";
+
                               return (
                                 <div
-                                  className={`${badgeSize} bg-gradient-to-br from-yellow-400 to-yellow-500 text-red-700 rounded-full flex items-center justify-center font-black shadow-lg border-2 border-yellow-600 transform rotate-12`}
-                                  style={{
-                                    textShadow: "0px 0px 2px rgba(255,255,255,0.8)"
-                                  }}
+                                  className="absolute bottom-0 left-0 right-0 px-1 pb-1"
+                                  style={{ height: '60px' }}
                                 >
-                                  -{item.discountPercent}%
+                                  {/* Grid container for name and price */}
+                                  <div className="grid grid-cols-[2fr_1fr] gap-2 items-end h-full">
+                                    {/* Left column: Product Name - moved to right */}
+                                    <div className="flex items-end justify-end">
+                                      <h3
+                                        className={`${nameSizeClass} font-bold text-gray-900 leading-tight line-clamp-2 text-right`}
+                                      >
+                                        {(item as any).displayName ??
+                                          item.product.name}
+                                      </h3>
+                                    </div>
+                                    
+                                    {/* Right column: Price + Discount Badge */}
+                                    <div className="relative inline-block">
+                                      {/* Discount badge - tangent to top-right of price box */}
+                                      {item.discountPercent > 0 && (
+                                        <div
+                                          className={`${badgeSize} bg-gradient-to-br from-yellow-400 to-yellow-500 text-red-700 rounded-full flex items-center justify-center font-black shadow-md border-2 border-yellow-600 absolute z-10`}
+                                          style={{
+                                            textShadow: "0px 0px 2px rgba(255,255,255,0.9)",
+                                            top: "-6px",
+                                            right: "-6px",
+                                            fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                            fontWeight: 900
+                                          }}
+                                        >
+                                          -{item.discountPercent}%
+                                        </div>
+                                      )}
+                                      
+                                      {/* Price Box with Old Price (top) and New Price (bottom) */}
+                                      <div
+                                        className={`${pricePadding} bg-gradient-to-br from-red-600 to-red-700 shadow-lg rounded border border-red-800`}
+                                      >
+                                        {/* Old Price inside red box at top */}
+                                        {item.discountPercent > 0 && (
+                                          <div
+                                            className={`${oldPriceSizeClass} font-bold text-white/90 line-through mb-1`}
+                                            style={{
+                                              fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                              fontWeight: 700
+                                            }}
+                                          >
+                                            {(
+                                              (item as any).originalPriceOverride ??
+                                              item.product.originalPrice
+                                            ).toFixed(2)} TL
+                                          </div>
+                                        )}
+                                        
+                                        {/* New Price at bottom */}
+                                        <div
+                                          className={`text-yellow-400 ${priceSizeClass} whitespace-nowrap leading-tight`}
+                                          style={{
+                                            textShadow: "2px 2px 4px rgba(0,0,0,0.7)",
+                                            fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                            fontWeight: 900
+                                          }}
+                                        >
+                                          {item.newPrice.toFixed(2)} ₺
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             })()}

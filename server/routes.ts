@@ -348,16 +348,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const campaignId = parseInt(req.params.campaignId);
       const campaignProducts = await storage.getCampaignProducts(campaignId);
 
-      // Enrich with product details
-      const enrichedProducts = await Promise.all(
-        campaignProducts.map(async (cp) => {
-          const product = await storage.getProduct(cp.productId);
-          return { ...cp, product };
-        })
-      );
+      // Enrich with product details from JSON (persistent storage)
+      const allProducts = await readJsonArray<any>(productsJsonPath);
+      const enrichedProducts = campaignProducts.map((cp) => {
+        // Try to find product in JSON first, fallback to in-memory
+        let product = allProducts.find((p) => p.id === cp.productId);
+        if (!product) {
+          // Fallback to in-memory if not found in JSON
+          product = storage.products.get(cp.productId);
+        }
+        return { ...cp, product };
+      });
 
       res.json(enrichedProducts);
     } catch (error) {
+      console.error("Failed to fetch campaign products:", error);
       res.status(500).json({ message: "Failed to fetch campaign products" });
     }
   });
