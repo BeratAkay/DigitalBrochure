@@ -2052,32 +2052,40 @@ export default function BrochureEditor({
                                   : "text-[9px]";
                               const priceSizeClass =
                                 productCount === 1
-                                  ? "text-2xl"
+                                  ? "text-[2.25rem]"
                                   : productCount <= 3
-                                  ? "text-xl"
+                                  ? "text-2xl"
                                   : productCount <= 6
-                                  ? "text-lg"
-                                  : "text-base";
+                                  ? "text-xl"
+                                  : "text-lg";
                               const oldPriceSizeClass =
                                 productCount === 1
-                                  ? "text-sm"
+                                  ? "text-[0.82rem]"
                                   : productCount <= 3
                                   ? "text-xs"
                                   : "text-[10px]";
                               const badgeSize =
                                 productCount === 1
-                                  ? "w-11 h-11 text-base"
+                                  ? "h-9 w-12"
                                   : productCount <= 3
-                                  ? "w-9 h-9 text-sm"
+                                  ? "h-8 w-11"
                                   : productCount <= 6
-                                  ? "w-8 h-8 text-xs"
-                                  : "w-7 h-7 text-[10px]";
+                                  ? "h-7 w-10"
+                                  : "h-6 w-9";
+                              const badgeTextSize =
+                                productCount === 1
+                                  ? "text-[1.05rem]"
+                                  : productCount <= 3
+                                  ? "text-base"
+                                  : productCount <= 6
+                                  ? "text-sm"
+                                  : "text-xs";
                               const pricePadding =
                                 productCount === 1
-                                  ? "px-4 py-2"
+                                  ? "px-2.5 pt-1.5 pb-2"
                                   : productCount <= 3
-                                  ? "px-3 py-1.5"
-                                  : "px-2 py-1";
+                                  ? "px-2 pt-1 pb-1.5"
+                                  : "px-2 pt-1 pb-1";
 
                               return (
                                 <div
@@ -2097,34 +2105,35 @@ export default function BrochureEditor({
                                     </div>
                                     
                                     {/* Right column: Price + Discount Badge */}
-                                    <div className="relative inline-block">
+                                    <div className="relative inline-flex">
                                       {/* Discount badge - tangent to top-right of price box */}
                                       {item.discountPercent > 0 && (
                                         <div
-                                          className={`${badgeSize} bg-gradient-to-br from-yellow-400 to-yellow-500 text-red-700 rounded-full flex items-center justify-center font-black shadow-md border-2 border-yellow-600 absolute z-10`}
+                                          className={`${badgeSize} ${badgeTextSize} bg-gradient-to-b from-[#ffe800] to-[#ffb100] text-[#d71920] flex items-center justify-center font-black shadow-[0_2px_0_rgba(0,0,0,0.25)] border-2 border-[#d71920] absolute z-10`}
                                           style={{
-                                            textShadow: "0px 0px 2px rgba(255,255,255,0.9)",
-                                            top: "-22px",
-                                            right: "2px",
+                                            top: "-20px",
+                                            right: "-6px",
                                             fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
-                                            fontWeight: 900
+                                            fontWeight: 900,
+                                            lineHeight: 1,
+                                            letterSpacing: "-0.02em"
                                           }}
                                         >
-                                          -{item.discountPercent}%
+                                          %{item.discountPercent}
                                         </div>
                                       )}
                                       
                                       {/* Price Box with Old Price (top) and New Price (bottom) */}
                                       <div
-                                        className={`${pricePadding} bg-gradient-to-br from-red-600 to-red-700 shadow-lg rounded border border-red-800`}
+                                        className={`${pricePadding} bg-gradient-to-b from-[#ef202a] to-[#c21117] outline outline-[3px] outline-[#ffd200] shadow-[0_4px_0_rgba(0,0,0,0.25)] flex flex-col gap-1`}
                                       >
                                         {/* Old Price inside red box at top */}
                                         {item.discountPercent > 0 && (
                                           <div
-                                            className={`${oldPriceSizeClass} font-bold text-white/90 line-through mb-1`}
+                                            className={`${oldPriceSizeClass} font-semibold text-white line-through decoration-[3px] decoration-[#ffd200] leading-none tracking-tight`}
                                             style={{
                                               fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
-                                              fontWeight: 700
+                                              fontWeight: 600
                                             }}
                                           >
                                             {(
@@ -2135,15 +2144,18 @@ export default function BrochureEditor({
                                         )}
                                         
                                         {/* New Price at bottom */}
-                                        <div
-                                          className={`text-yellow-400 ${priceSizeClass} whitespace-nowrap leading-tight`}
-                                          style={{
-                                            textShadow: "2px 2px 4px rgba(0,0,0,0.7)",
-                                            fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
-                                            fontWeight: 900
-                                          }}
-                                        >
-                                          {item.newPrice.toFixed(2)} ₺
+                                        <div className="flex items-baseline gap-[2px] whitespace-nowrap">
+                                          <span className="text-[#ffe600] text-[1.1rem] font-black" style={{ transform: 'translateY(2px)', filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.3))" }}>₺</span>
+                                          <span
+                                            className={`text-[#ffe600] ${priceSizeClass} font-black tracking-[-0.04em] leading-none`}
+                                            style={{
+                                              filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.3))",
+                                              fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                              fontWeight: 900
+                                            }}
+                                          >
+                                            {item.newPrice.toFixed(0)}<span className="text-[0.7em]" style={{ transform: 'translateY(2px)', display: 'inline-block' }}>{(item.newPrice % 1).toFixed(2).substring(1)}</span>
+                                          </span>
                                         </div>
                                       </div>
                                     </div>
