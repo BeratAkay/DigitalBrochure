@@ -2002,7 +2002,7 @@ export default function BrochureEditor({
                               className="relative flex items-center justify-center"
                               style={{
                                 width: `${grid.cells[cellIndex].innerWidth}px`,
-                                height: `${grid.cells[cellIndex].innerHeight - 60}px`,
+                                height: `${grid.cells[cellIndex].innerHeight}px`,
                                 transform: `rotate(${rotation}deg) scaleX(${scale.scaleX}) scaleY(${scale.scaleY})`,
                                 transition:
                                   isRotating || isResizing
@@ -2090,12 +2090,11 @@ export default function BrochureEditor({
                               return (
                                 <div
                                   className="absolute bottom-0 left-0 right-0 px-1 pb-1"
-                                  style={{ height: '60px' }}
                                 >
                                   {/* Grid container for name and price */}
-                                  <div className="grid grid-cols-[2fr_1fr] gap-2 items-end h-full">
+                                  <div className="flex items-end justify-between gap-2">
                                     {/* Left column: Product Name - moved to right */}
-                                    <div className="flex items-end justify-end">
+                                    <div className="flex items-end justify-end flex-1">
                                       <h3
                                         className={`${nameSizeClass} font-bold text-gray-900 leading-tight line-clamp-2 text-right`}
                                       >
@@ -2105,7 +2104,7 @@ export default function BrochureEditor({
                                     </div>
                                     
                                     {/* Right column: Price + Discount Badge */}
-                                    <div className="relative inline-flex">
+                                    <div className="relative inline-flex shrink-0">
                                       {/* Discount badge - tangent to top-right of price box */}
                                       {item.discountPercent > 0 && (
                                         <div
