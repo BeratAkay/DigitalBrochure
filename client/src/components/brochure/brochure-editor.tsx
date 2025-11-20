@@ -51,6 +51,12 @@ import { useLocation } from "wouter";
 import type { Product, CampaignProduct, Template, Logo } from "@shared/schema";
 //#endregion
 
+// Constants for design defaults
+const DEFAULT_PRODUCT_SCALE = 1.4;
+const HEADER_BG_COLOR = "#f59e0b";
+const HEADER_BG_OPACITY = 0.95;
+const DEFAULT_BACKGROUND_COLOR = "rgba(245, 214, 138, 0.6)";
+
 interface BrochureEditorProps {
   selectedProducts: (CampaignProduct & { product: Product })[];
   campaign: any;
@@ -113,9 +119,7 @@ export default function BrochureEditor({
     useState<number | null>(null);
   // Style & template controls
   const [showSupermarketTemplate, setShowSupermarketTemplate] = useState(true);
-  const [headerBgColor, setHeaderBgColor] = useState<string>("#f59e0b"); // amber-500
-  const [headerBgAlpha, setHeaderBgAlpha] = useState<number>(0.95); // header opacity
-  const [bannerBgColor, setBannerBgColor] = useState<string>("#111827"); // gray-900
+  const [bannerBgColor, setBannerBgColor] = useState<string>("#f59e0b");
   const [bannerText, setBannerText] = useState<string>(
     "INDIRIMLI ALIŞVERİŞ REHBERİ"
   );
@@ -125,11 +129,6 @@ export default function BrochureEditor({
   const [titleFont, setTitleFont] = useState<string>(
     "'Bebas Neue', 'Montserrat', 'Arial Black', sans-serif"
   );
-  // Background customization (hex + opacity + optional image)
-  const [bgBaseHex, setBgBaseHex] = useState<string>("#f5d68a");
-  const [bgBaseAlpha, setBgBaseAlpha] = useState<number>(0.6);
-  const [bgImageUrl, setBgImageUrl] = useState<string | null>(null);
-  const [bgImageOpacity, setBgImageOpacity] = useState<number>(0.35);
   const [pages, setPages] = useState<number>(initialPages);
   // Instagram format selection: "4:5" (1080x1350) or "1:1" (1080x1080)
   const [instagramFormat, setInstagramFormat] = useState<"4:5" | "1:1">("4:5");
@@ -314,13 +313,13 @@ export default function BrochureEditor({
     };
   };
 
-  // Adaptive grid geometry up to 20 items per page with deterministic 4x5 growth
+  // Adaptive grid geometry up to 9 items per page with deterministic 3x3 growth
   const getAdaptiveGridGeometry = (
     canvasWidth: number,
     canvasHeight: number,
     count: number
   ) => {
-    const clampedCount = Math.max(1, Math.min(20, count));
+    const clampedCount = Math.max(1, Math.min(9, count));
     const marginX = 40;
     const gridTop = 120 + 44 + 16; // below banner
     const gridBottomOffset = 80 + 16; // above footer
@@ -330,54 +329,44 @@ export default function BrochureEditor({
     const areaHeight = Math.max(0, canvasHeight - gridTop - gridBottomOffset);
     const gap = 14;
 
-    // Determine rows per column based on desired sequence to reach 4x5
+    // Determine rows per column based on desired sequence to reach 3x3
     const rowsPerColumn: number[] = [1]; // start with 1 column, 1 row
     if (clampedCount >= 2) rowsPerColumn.push(1); // 2 columns
     if (clampedCount >= 3) rowsPerColumn[0] = 2; // split left column
     if (clampedCount >= 4) rowsPerColumn[1] = 2; // split right column
 
     let remaining = Math.max(0, clampedCount - Math.min(4, clampedCount));
-    // Phase A: grow first two columns up to 5 rows with pattern [0,0,1,1,0,1]
+    // Phase A: grow first two columns up to 3 rows with pattern [0,0,1,1,0,1]
     const pattern = [0, 0, 1, 1, 0, 1];
     let pi = 0;
     while (
       remaining > 0 &&
       rowsPerColumn.length >= 2 &&
-      (rowsPerColumn[0] < 5 || rowsPerColumn[1] < 5)
+      (rowsPerColumn[0] < 3 || rowsPerColumn[1] < 3)
     ) {
       const target = pattern[pi % pattern.length];
-      if (rowsPerColumn[target] < 5) {
+      if (rowsPerColumn[target] < 3) {
         rowsPerColumn[target] += 1;
         remaining -= 1;
       }
       pi += 1;
     }
 
-    // Phase B: add third column and fill to 5
+    // Phase B: add third column and fill to 3
     if (remaining > 0 && rowsPerColumn.length < 3) {
       rowsPerColumn.push(1);
       remaining -= 1;
     }
-    while (remaining > 0 && rowsPerColumn.length >= 3 && rowsPerColumn[2] < 5) {
+    while (remaining > 0 && rowsPerColumn.length >= 3 && rowsPerColumn[2] < 3) {
       rowsPerColumn[2] += 1;
       remaining -= 1;
     }
 
-    // Phase C: add fourth column and fill to 5
-    if (remaining > 0 && rowsPerColumn.length < 4) {
-      rowsPerColumn.push(1);
-      remaining -= 1;
-    }
-    while (remaining > 0 && rowsPerColumn.length >= 4 && rowsPerColumn[3] < 5) {
-      rowsPerColumn[3] += 1;
-      remaining -= 1;
-    }
-
-    // Clamp to max columns 4 and rows 5
-    const cols = Math.min(4, rowsPerColumn.length);
+    // Clamp to max columns 3 and rows 3
+    const cols = Math.min(3, rowsPerColumn.length);
     const finalRowsPerCol = rowsPerColumn
       .slice(0, cols)
-      .map((r) => Math.min(5, r));
+      .map((r) => Math.min(3, r));
 
     // Compute equal-width columns and equal-height rows within each column
     const totalColGaps = gap * (cols - 1);
@@ -471,8 +460,8 @@ export default function BrochureEditor({
         // Initialize scales and pages
         if (!productScales[item.id]) {
           newScales[item.id] = {
-            scaleX: item.scaleX || 1,
-            scaleY: item.scaleY || 1,
+            scaleX: item.scaleX || DEFAULT_PRODUCT_SCALE,
+            scaleY: item.scaleY || DEFAULT_PRODUCT_SCALE,
           };
         }
 
@@ -659,7 +648,7 @@ export default function BrochureEditor({
     setRotatingProductId(null);
 
     // Store initial resize state
-    const currentScale = productScales[productId] || { scaleX: 1, scaleY: 1 };
+    const currentScale = productScales[productId] || { scaleX: DEFAULT_PRODUCT_SCALE, scaleY: DEFAULT_PRODUCT_SCALE };
     setInitialResizeState({
       startX: e.clientX,
       startY: e.clientY,
@@ -674,11 +663,11 @@ export default function BrochureEditor({
     }));
   };
 
-  // Automatically distribute products up to 20 per page
+  // Automatically distribute products up to 9 per page
   const distributeProductsAcrossPages = (numPages: number) => {
     const newPages: Record<number, number> = {};
     selectedProducts.forEach((item, index) => {
-      const targetPage = Math.floor(index / 20) + 1; // 20 per page
+      const targetPage = Math.floor(index / 9) + 1; // 9 per page
       newPages[item.id] = Math.min(targetPage, numPages);
     });
     setProductPages(newPages);
@@ -692,9 +681,9 @@ export default function BrochureEditor({
     }
   };
 
-  // Ensure enough pages for 20 per page when product list changes
+  // Ensure enough pages for 9 per page when product list changes
   useEffect(() => {
-    const requiredPages = Math.max(1, Math.ceil(selectedProducts.length / 20));
+    const requiredPages = Math.max(1, Math.ceil(selectedProducts.length / 9));
     if (requiredPages !== pages) {
       setPages(requiredPages);
       distributeProductsAcrossPages(requiredPages);
@@ -958,8 +947,8 @@ export default function BrochureEditor({
           y: layout.marginY + offsetY + row * actualSpaceY,
         };
 
-        // Reset scaling to 1 since we handle size dynamically in render
-        newScales[item.id] = { scaleX: 1, scaleY: 1 };
+        // Reset scaling to default
+        newScales[item.id] = { scaleX: DEFAULT_PRODUCT_SCALE, scaleY: DEFAULT_PRODUCT_SCALE };
       });
     });
 
@@ -1018,7 +1007,7 @@ export default function BrochureEditor({
       for (const product of selectedProducts) {
         const position = productPositions[product.id] || { x: 0, y: 0 };
         const pageNumber = productPages[product.id] || 1;
-        const scale = productScales[product.id] || { scaleX: 1, scaleY: 1 };
+        const scale = productScales[product.id] || { scaleX: DEFAULT_PRODUCT_SCALE, scaleY: DEFAULT_PRODUCT_SCALE };
         const rotation = productRotations[product.id] || 0;
 
         const campaignProductData = {
@@ -1111,7 +1100,7 @@ export default function BrochureEditor({
         const rect = element.getBoundingClientRect();
         const { width: targetWidth, height: targetHeight } =
           getTargetDimensions();
-        
+
         // Calculate scale factors for each dimension to maintain exact aspect ratio
         const scaleX = targetWidth / rect.width;
         const scaleY = targetHeight / rect.height;
@@ -1558,7 +1547,7 @@ export default function BrochureEditor({
               const pageProducts = selectedProducts
                 .map((p, idx) => ({ p, idx }))
                 .filter(({ p }) => (productPages[p.id] || 1) === pageNumber)
-                .slice(0, 20)
+                .slice(0, 9)
                 .map(({ p }) => p);
 
               return (
@@ -1620,19 +1609,15 @@ export default function BrochureEditor({
                               return `url(/uploads/${pageTemplate.filePath})`;
                             }
                           }
-                          // Fallback to global selected template or modern supermarket gradient
+                          // Fallback to global selected template or default background
                           if (selectedTemplate && selectedTemplate.filePath) {
                             return `url(/uploads/${selectedTemplate.filePath})`;
                           }
-                          // Base color from background color + opacity
-                          const rgb = hexToRgb(bgBaseHex);
-                          const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${bgBaseAlpha})`;
-                          return `linear-gradient(0deg, ${rgba}, ${rgba})`;
+                          // Default background color
+                          return `linear-gradient(0deg, ${DEFAULT_BACKGROUND_COLOR}, ${DEFAULT_BACKGROUND_COLOR})`;
                         } catch (error) {
                           console.error("Error loading template:", error);
-                          const rgb = hexToRgb(bgBaseHex);
-                          const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${bgBaseAlpha})`;
-                          return `linear-gradient(0deg, ${rgba}, ${rgba})`;
+                          return `linear-gradient(0deg, ${DEFAULT_BACKGROUND_COLOR}, ${DEFAULT_BACKGROUND_COLOR})`;
                         }
                       })(),
                       backgroundSize: "cover",
@@ -1670,8 +1655,8 @@ export default function BrochureEditor({
                           className="absolute left-0 top-0 w-full"
                           style={{
                             height: 120,
-                            background: headerBgColor,
-                            opacity: headerBgAlpha,
+                            background: HEADER_BG_COLOR,
+                            opacity: HEADER_BG_OPACITY,
                             borderTopLeftRadius: "20px",
                             borderTopRightRadius: "20px",
                           }}
@@ -1737,19 +1722,6 @@ export default function BrochureEditor({
                             </div>
                           </div>
                         </div>
-                        {/* Optional background image overlay */}
-                        {bgImageUrl && (
-                          <div
-                            className="absolute inset-0"
-                            style={{
-                              backgroundImage: `url(${bgImageUrl})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              opacity: bgImageOpacity,
-                              pointerEvents: "none",
-                            }}
-                          />
-                        )}
                       </>
                     )}
 
@@ -1914,7 +1886,7 @@ export default function BrochureEditor({
                       </div>
                     )}
 
-                    {/* Draggable Products - Adaptive grid up to 20 per page */}
+                    {/* Draggable Products - Adaptive grid up to 9 per page (3x3 max) */}
                     {pageProducts.map((item) => {
                       const canvasDims = getCanvasDimensions();
                       const grid = getAdaptiveGridGeometry(
@@ -1931,8 +1903,8 @@ export default function BrochureEditor({
                         grid.cells[cellIndex] || grid.cells[fallbackIndex];
                       const rotation = productRotations[item.id] || 0;
                       const scale = productScales[item.id] || {
-                        scaleX: 1,
-                        scaleY: 1,
+                        scaleX: DEFAULT_PRODUCT_SCALE,
+                        scaleY: DEFAULT_PRODUCT_SCALE,
                       };
                       const isDragging = draggedProductId === item.id;
                       const isRotating = rotatingProductId === item.id;
@@ -2088,9 +2060,7 @@ export default function BrochureEditor({
                                   : "px-2 pt-1 pb-1";
 
                               return (
-                                <div
-                                  className="absolute bottom-0 left-0 right-0 px-1 pb-1"
-                                >
+                                <div className="absolute bottom-0 left-0 right-0 px-1 pb-1">
                                   {/* Grid container for name and price */}
                                   <div className="flex items-end justify-between gap-2">
                                     {/* Left column: Product Name - moved to right */}
@@ -2102,7 +2072,7 @@ export default function BrochureEditor({
                                           item.product.name}
                                       </h3>
                                     </div>
-                                    
+
                                     {/* Right column: Price + Discount Badge */}
                                     <div className="relative inline-flex shrink-0">
                                       {/* Discount badge - tangent to top-right of price box */}
@@ -2112,16 +2082,17 @@ export default function BrochureEditor({
                                           style={{
                                             top: "-20px",
                                             right: "-6px",
-                                            fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                            fontFamily:
+                                              "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
                                             fontWeight: 900,
                                             lineHeight: 1,
-                                            letterSpacing: "-0.02em"
+                                            letterSpacing: "-0.02em",
                                           }}
                                         >
                                           %{item.discountPercent}
                                         </div>
                                       )}
-                                      
+
                                       {/* Price Box with Old Price (top) and New Price (bottom) */}
                                       <div
                                         className={`${pricePadding} bg-gradient-to-b from-[#ef202a] to-[#c21117] outline outline-[3px] outline-[#ffd200] shadow-[0_4px_0_rgba(0,0,0,0.25)] flex flex-col gap-1`}
@@ -2131,29 +2102,54 @@ export default function BrochureEditor({
                                           <div
                                             className={`${oldPriceSizeClass} font-semibold text-white line-through decoration-[3px] decoration-[#ffd200] leading-none tracking-tight`}
                                             style={{
-                                              fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
-                                              fontWeight: 600
+                                              fontFamily:
+                                                "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                              fontWeight: 600,
                                             }}
                                           >
                                             {(
-                                              (item as any).originalPriceOverride ??
+                                              (item as any)
+                                                .originalPriceOverride ??
                                               item.product.originalPrice
-                                            ).toFixed(2)} TL
+                                            ).toFixed(2)}{" "}
+                                            TL
                                           </div>
                                         )}
-                                        
+
                                         {/* New Price at bottom */}
                                         <div className="flex items-baseline gap-[2px] whitespace-nowrap">
-                                          <span className="text-[#ffe600] text-[1.1rem] font-black" style={{ transform: 'translateY(2px)', filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.3))" }}>₺</span>
+                                          <span
+                                            className="text-[#ffe600] text-[1.1rem] font-black"
+                                            style={{
+                                              transform: "translateY(2px)",
+                                              filter:
+                                                "drop-shadow(0 2px 0 rgba(0,0,0,0.3))",
+                                            }}
+                                          >
+                                            ₺
+                                          </span>
                                           <span
                                             className={`text-[#ffe600] ${priceSizeClass} font-black tracking-[-0.04em] leading-none`}
                                             style={{
-                                              filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.3))",
-                                              fontFamily: "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
-                                              fontWeight: 900
+                                              filter:
+                                                "drop-shadow(0 2px 0 rgba(0,0,0,0.3))",
+                                              fontFamily:
+                                                "'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif",
+                                              fontWeight: 900,
                                             }}
                                           >
-                                            {item.newPrice.toFixed(0)}<span className="text-[0.7em]" style={{ transform: 'translateY(2px)', display: 'inline-block' }}>{(item.newPrice % 1).toFixed(2).substring(1)}</span>
+                                            {item.newPrice.toFixed(0)}
+                                            <span
+                                              className="text-[0.7em]"
+                                              style={{
+                                                transform: "translateY(2px)",
+                                                display: "inline-block",
+                                              }}
+                                            >
+                                              {(item.newPrice % 1)
+                                                .toFixed(2)
+                                                .substring(1)}
+                                            </span>
                                           </span>
                                         </div>
                                       </div>
@@ -2254,7 +2250,7 @@ export default function BrochureEditor({
                             isLogoSelected
                               ? logoScale || 1
                               : productScales[selectedProductIdForControls || 0]
-                                  ?.scaleX || 1
+                                  ?.scaleX || DEFAULT_PRODUCT_SCALE
                           }
                           onChange={(e) => {
                             const val = parseFloat(e.target.value);
@@ -2283,7 +2279,7 @@ export default function BrochureEditor({
                             isLogoSelected
                               ? logoScale || 1
                               : productScales[selectedProductIdForControls || 0]
-                                  ?.scaleX || 1
+                                  ?.scaleX || DEFAULT_PRODUCT_SCALE
                           }
                           onChange={(e) => {
                             const val = parseFloat(e.target.value || "1");
@@ -2373,51 +2369,6 @@ export default function BrochureEditor({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Header Color
-                      </label>
-                      <input
-                        type="color"
-                        value={headerBgColor}
-                        onChange={(e) => setHeaderBgColor(e.target.value)}
-                        className="h-9 w-16 p-1 border rounded"
-                      />
-                      <div className="space-y-1 mt-2">
-                        <span className="block text-xs text-gray-600">
-                          Opacity
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            className="flex-1"
-                            value={headerBgAlpha}
-                            onChange={(e) =>
-                              setHeaderBgAlpha(parseFloat(e.target.value))
-                            }
-                          />
-                          <input
-                            type="number"
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            className="w-16 border rounded px-1 py-1 text-xs"
-                            value={headerBgAlpha}
-                            onChange={(e) =>
-                              setHeaderBgAlpha(
-                                Math.max(
-                                  0,
-                                  Math.min(1, parseFloat(e.target.value || "0"))
-                                )
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
                         Banner Color
                       </label>
                       <input
@@ -2447,113 +2398,6 @@ export default function BrochureEditor({
                         value={footerBgColor}
                         onChange={(e) => setFooterBgColor(e.target.value)}
                         className="h-9 w-16 p-1 border rounded"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Background */}
-                <div className="border rounded-lg p-3">
-                  <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                    Background
-                  </h5>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Background Color
-                  </label>
-                  <div className="space-y-2">
-                    <div>
-                      <input
-                        type="color"
-                        value={bgBaseHex}
-                        onChange={(e) => setBgBaseHex(e.target.value)}
-                        className="h-9 w-16 p-1 border rounded"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-xs text-gray-600">
-                        Opacity
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          className="flex-1"
-                          value={bgBaseAlpha}
-                          onChange={(e) =>
-                            setBgBaseAlpha(parseFloat(e.target.value))
-                          }
-                        />
-                        <input
-                          type="number"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          className="w-16 border rounded px-1 py-1 text-xs"
-                          value={bgBaseAlpha}
-                          onChange={(e) =>
-                            setBgBaseAlpha(
-                              Math.max(
-                                0,
-                                Math.min(1, parseFloat(e.target.value || "0"))
-                              )
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-2">
-                      Background Image
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          document.getElementById("bg-image-upload")?.click()
-                        }
-                      >
-                        Upload
-                      </Button>
-                      {bgImageUrl && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setBgImageUrl(null)}
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                    <input
-                      id="bg-image-upload"
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (!file) return;
-                        const objectUrl = URL.createObjectURL(file);
-                        setBgImageUrl(objectUrl);
-                      }}
-                    />
-                    <div className="mt-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Background Image Opacity
-                      </label>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={bgImageOpacity}
-                        onChange={(e) =>
-                          setBgImageOpacity(parseFloat(e.target.value))
-                        }
-                        className="w-full"
                       />
                     </div>
                   </div>
