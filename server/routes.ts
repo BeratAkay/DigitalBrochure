@@ -11,6 +11,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { unlink } from "fs/promises";
 
 // Configure multer for file uploads - use persistent directory
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -502,6 +503,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Template upload error:", error);
       res.status(500).json({ message: "Failed to upload template" });
+    }
+  });
+
+  app.delete("/api/templates/:id", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      if (!templateId) {
+        return res.status(400).json({ message: "Template ID is required" });
+      }
+
+      // Read templates from JSON
+      const arr = await readJsonArray<any>(templatesJsonPath);
+      const templateIndex = arr.findIndex((t) => t.id === templateId);
+
+      if (templateIndex === -1) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const template = arr[templateIndex];
+
+      // Delete physical files if they exist
+      if (template.filePath) {
+        // Delete from uploads folder
+        const uploadsPath = path.join(
+          process.cwd(),
+          "uploads",
+          template.filePath
+        );
+        try {
+          await unlink(uploadsPath);
+        } catch (e) {
+          console.warn("Could not delete file from uploads:", e);
+        }
+
+        // Delete from public/assets folder
+        const publicAssetsPath = path.join(
+          process.cwd(),
+          "public",
+          "assets",
+          template.filePath
+        );
+        try {
+          await unlink(publicAssetsPath);
+        } catch (e) {
+          console.warn("Could not delete file from public/assets:", e);
+        }
+      }
+
+      // Remove from array and save
+      arr.splice(templateIndex, 1);
+      await writeJsonArray(templatesJsonPath, arr);
+
+      // Also remove from memory storage
+      await storage.deleteTemplate(templateId);
+
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Template delete error:", error);
+      res.status(500).json({ message: "Failed to delete template" });
     }
   });
 

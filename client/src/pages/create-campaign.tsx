@@ -396,12 +396,14 @@ export default function CreateCampaign() {
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setPageTemplates((prev) => ({
                               ...prev,
                               [pageIndex + 1]: null,
-                            }))
-                          }
+                            }));
+                          }}
+                          data-testid={`template-default-page-${pageIndex + 1}`}
                         >
                           <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
                             <Layout className="w-8 h-8 text-white" />
@@ -425,12 +427,14 @@ export default function CreateCampaign() {
                                 ? "border-blue-500 bg-blue-50"
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setPageTemplates((prev) => ({
                                 ...prev,
                                 [pageIndex + 1]: template.id,
-                              }))
-                            }
+                              }));
+                            }}
+                            data-testid={`template-${template.id}-page-${pageIndex + 1}`}
                           >
                             <div className="aspect-[3/4] rounded-lg overflow-hidden">
                               <img

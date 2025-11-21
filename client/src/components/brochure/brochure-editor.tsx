@@ -53,9 +53,9 @@ import type { Product, CampaignProduct, Template, Logo } from "@shared/schema";
 
 // Constants for design defaults
 const DEFAULT_PRODUCT_SCALE = 1.4;
-const HEADER_BG_COLOR = "#f59e0b";
-const HEADER_BG_OPACITY = 0.95;
-const DEFAULT_BACKGROUND_COLOR = "rgba(245, 214, 138, 0.6)";
+const HEADER_BG_COLOR = "transparent";
+const HEADER_BG_OPACITY = 0;
+const DEFAULT_BACKGROUND_COLOR = "transparent";
 
 interface BrochureEditorProps {
   selectedProducts: (CampaignProduct & { product: Product })[];
@@ -119,12 +119,12 @@ export default function BrochureEditor({
     useState<number | null>(null);
   // Style & template controls
   const [showSupermarketTemplate, setShowSupermarketTemplate] = useState(true);
-  const [bannerBgColor, setBannerBgColor] = useState<string>("#f59e0b");
+  const [bannerBgColor, setBannerBgColor] = useState<string>("#e2b474");
   const [bannerText, setBannerText] = useState<string>(
     "INDIRIMLI ALIŞVERİŞ REHBERİ"
   );
   const [bannerTextColor, setBannerTextColor] = useState<string>("#ffffff");
-  const [footerBgColor, setFooterBgColor] = useState<string>("#f59e0b");
+  const [footerBgColor, setFooterBgColor] = useState<string>("#e2b474");
   const [titleColor, setTitleColor] = useState<string>("#a281fe"); // purple
   const [titleFont, setTitleFont] = useState<string>(
     "'Bebas Neue', 'Montserrat', 'Arial Black', sans-serif"
@@ -1697,7 +1697,6 @@ export default function BrochureEditor({
                           style={{
                             height: 80,
                             background: footerBgColor,
-                            opacity: 0.2,
                             borderBottomLeftRadius: "20px",
                             borderBottomRightRadius: "20px",
                           }}

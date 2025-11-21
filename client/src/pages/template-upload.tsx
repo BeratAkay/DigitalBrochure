@@ -61,6 +61,33 @@ export default function TemplateUpload() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (templateId: number) => {
+      const response = await fetch(`/api/templates/${templateId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/templates", user?.id] });
+      toast({
+        title: "Template deleted successfully",
+        description: "The template has been removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the template.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -217,13 +244,37 @@ export default function TemplateUpload() {
                       {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : ""}
                     </span>
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" className="text-primary">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast({
+                            title: "Edit feature",
+                            description: "Edit functionality coming soon!",
+                          });
+                        }}
+                        data-testid={`button-edit-template-${template.id}`}
+                      >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-red-600">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to delete "${template.name}"?`)) {
+                            deleteMutation.mutate(template.id);
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                        data-testid={`button-delete-template-${template.id}`}
+                      >
                         <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
+                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
                       </Button>
                     </div>
                   </div>
