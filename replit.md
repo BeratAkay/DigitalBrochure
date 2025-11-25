@@ -55,16 +55,11 @@ The application follows a monorepo structure with separate client and server dir
 - File storage for template assets
 - Thumbnail generation for template previews
 
-### Logo Management
-- Company logo upload and management
-- Active logo selection for brochures
-- File storage for logo assets
-
 ### Brochure Generation
 - Visual brochure editor with template selection
-- Product positioning on brochures
-- Company branding integration
-- PDF generation for final output
+- Product positioning and customization on brochures
+- PDF/PNG/JPEG export for final output
+- Product rotation and scaling controls
 
 ## Data Flow
 
@@ -83,9 +78,10 @@ The application follows a monorepo structure with separate client and server dir
 ### Campaign Creation Workflow
 1. User searches and selects products
 2. Products added to campaign with quantities and discounts
-3. Template and logo selected for brochure design
-4. Campaign saved as draft or activated
-5. Brochure generated and available for download
+3. Template selected for brochure design
+4. Products positioned and customized on brochure pages
+5. Campaign saved as draft or activated
+6. Brochure generated and available for download
 
 ## External Dependencies
 
@@ -124,6 +120,14 @@ The application follows a monorepo structure with separate client and server dir
 - CORS configuration for cross-origin requests
 
 ## Recent Changes: Latest modifications with dates
+
+### November 25, 2025 - Simplified Brochure Editor
+- **Removed Phone Elements**: All phone number display and header phone area elements completely removed
+- **Removed Banner Elements**: Banner upload, positioning, and customization features removed
+- **Removed Logo Elements**: Logo upload, positioning, rotation, and scaling features removed
+- **Streamlined UI**: Simplified brochure editor focusing solely on product placement and customization
+- **Cleaner Codebase**: Reduced complexity by removing logo/banner/phone state management and UI controls
+- **Transform Controls**: Simplified to only handle product rotation and scaling
 
 ### January 27, 2025 - Enhanced Supermarket Style Design
 - **Authentic Supermarket Price Tags**: Redesigned to match Turkish supermarket catalogs with white name labels and red/yellow price backgrounds

@@ -28,7 +28,6 @@ import {
 import {
   Eye,
   Download,
-  Building,
   CalendarIcon,
   Image,
   Move,
@@ -38,8 +37,6 @@ import {
   Minus,
   RotateCw,
   Maximize2,
-  Upload,
-  Phone,
   Instagram,
   Facebook,
   Twitter,
@@ -84,7 +81,6 @@ export default function BrochureEditor({
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
-  const [selectedLogoId, setSelectedLogoId] = useState<number | null>(null);
   const [companyName, setCompanyName] = useState("Your Company Name");
   const [showCompanyName, setShowCompanyName] = useState(true);
   const [isEditingCompanyName, setIsEditingCompanyName] = useState(false);
@@ -94,7 +90,6 @@ export default function BrochureEditor({
   const [campaignDescription, setCampaignDescription] = useState("");
   const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
-  const [isLogoSelectOpen, setIsLogoSelectOpen] = useState(false);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [draggedProductId, setDraggedProductId] = useState<number | null>(null);
   const [rotatingProductId, setRotatingProductId] = useState<number | null>(
@@ -104,26 +99,10 @@ export default function BrochureEditor({
     null
   );
   const [lastMouseAngle, setLastMouseAngle] = useState<number>(0);
-  // Logo transform state
-  const [isRotatingLogo, setIsRotatingLogo] = useState<boolean>(false);
-  const [isResizingLogo, setIsResizingLogo] = useState<boolean>(false);
-  const [logoRotation, setLogoRotation] = useState<number>(0);
-  const [logoScale, setLogoScale] = useState<number>(1);
-  const [initialLogoResize, setInitialLogoResize] = useState<{
-    startX: number;
-    startY: number;
-    startScale: number;
-  } | null>(null);
-  const [isLogoSelected, setIsLogoSelected] = useState<boolean>(false);
   const [selectedProductIdForControls, setSelectedProductIdForControls] =
     useState<number | null>(null);
   // Style & template controls
   const [showSupermarketTemplate, setShowSupermarketTemplate] = useState(true);
-  const [bannerBgColor, setBannerBgColor] = useState<string>("#e2b474");
-  const [bannerText, setBannerText] = useState<string>(
-    "INDIRIMLI ALIŞVERİŞ REHBERİ"
-  );
-  const [bannerTextColor, setBannerTextColor] = useState<string>("#ffffff");
   const [footerBgColor, setFooterBgColor] = useState<string>("#e2b474");
   const [titleColor, setTitleColor] = useState<string>("#a281fe"); // purple
   const [titleFont, setTitleFont] = useState<string>(
@@ -133,7 +112,6 @@ export default function BrochureEditor({
   // Instagram format selection: "4:5" (1080x1350) or "1:1" (1080x1080)
   const [instagramFormat, setInstagramFormat] = useState<"4:5" | "1:1">("4:5");
   const [elementPositions, setElementPositions] = useState({
-    logo: { x: 32, y: 32 },
     companyName: { x: 112, y: 32 },
     dateRange: { x: 450, y: 32 },
   });
@@ -169,11 +147,6 @@ export default function BrochureEditor({
   //#endregion
 
   // Header/Footer editable content
-  const [headerPhoneText, setHeaderPhoneText] = useState<string>(
-    "Ücretsiz Sipariş Hattı"
-  );
-  const [headerPhoneNumber, setHeaderPhoneNumber] =
-    useState<string>("0552 155 66 55");
   const [footerAddress, setFooterAddress] = useState<string>(
     "Kazımkarabekir Mah. Şht. Sblv. Beylerbeyi Sit. A Blok No:26 İlkadım/SAMSUN"
   );
@@ -207,7 +180,6 @@ export default function BrochureEditor({
       setCampaignDescription(campaign.description || "");
       setCompanyName(campaign.companyName || "Your Company Name");
       setSelectedTemplateId(campaign.templateId || null);
-      setSelectedLogoId(campaign.logoId || null);
       if (campaign.startDate) setStartDate(new Date(campaign.startDate));
       if (campaign.endDate) setEndDate(new Date(campaign.endDate));
     }
@@ -524,31 +496,7 @@ export default function BrochureEditor({
     enabled: !!user?.id,
   });
 
-  const { data: logos = [] } = useQuery<Logo[]>({
-    queryKey: ["/api/logos", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const response = await fetch(`/api/logos?userId=${user.id}`);
-      if (!response.ok) throw new Error("Failed to fetch logos");
-      return response.json();
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: activeLogo } = useQuery<Logo | null>({
-    queryKey: ["/api/logos/active", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const response = await fetch(`/api/logos/active?userId=${user.id}`);
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!user?.id,
-  });
-
   const selectedTemplate = templates?.find((t) => t.id === selectedTemplateId);
-  const selectedLogo =
-    logos?.find((l) => l.id === selectedLogoId) || activeLogo;
 
   const handleTemplateSelect = (value: string) => {
     try {
@@ -556,15 +504,6 @@ export default function BrochureEditor({
       setSelectedTemplateId(templateId);
     } catch (error) {
       console.error("Error selecting template:", error);
-    }
-  };
-
-  const handleLogoSelect = (value: string) => {
-    try {
-      const logoId = parseInt(value);
-      setSelectedLogoId(logoId);
-    } catch (error) {
-      console.error("Error selecting logo:", error);
     }
   };
 
@@ -602,41 +541,6 @@ export default function BrochureEditor({
         Math.atan2(mouseY - centerY, mouseX - centerX) * (180 / Math.PI);
       setLastMouseAngle(angle);
     }
-  };
-
-  // Logo rotate/resize start handlers
-  const handleLogoRotateStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsRotatingLogo(true);
-    setDraggedElement(null);
-    setResizingProductId(null);
-    setRotatingProductId(null);
-    // Calculate initial angle from logo center
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const centerX = elementPositions.logo.x + 32; // base size 64
-      const centerY = elementPositions.logo.y + 32;
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      const angle =
-        Math.atan2(mouseY - centerY, mouseX - centerX) * (180 / Math.PI);
-      setLastMouseAngle(angle);
-    }
-  };
-
-  const handleLogoResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizingLogo(true);
-    setDraggedElement(null);
-    setResizingProductId(null);
-    setRotatingProductId(null);
-    setInitialLogoResize({
-      startX: e.clientX,
-      startY: e.clientY,
-      startScale: logoScale,
-    });
   };
 
   const handleProductResizeStart = (productId: number, e: React.MouseEvent) => {
@@ -730,16 +634,6 @@ export default function BrochureEditor({
       }));
     }
 
-    if (isRotatingLogo) {
-      const centerX = elementPositions.logo.x + 32;
-      const centerY = elementPositions.logo.y + 32;
-      const currentAngle =
-        Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
-      const angleDifference = currentAngle - lastMouseAngle;
-      setLogoRotation((prev) => prev + angleDifference);
-      setLastMouseAngle(currentAngle);
-    }
-
     if (rotatingProductId) {
       const productPos = productPositions[rotatingProductId] || { x: 0, y: 0 };
       const centerX = productPos.x + 66; // Half of product width
@@ -754,17 +648,6 @@ export default function BrochureEditor({
       }));
 
       setLastMouseAngle(currentAngle);
-    }
-
-    if (isResizingLogo && initialLogoResize) {
-      const deltaX = e.clientX - initialLogoResize.startX;
-      const deltaY = e.clientY - initialLogoResize.startY;
-      const avgDelta = (deltaX + deltaY) / 2;
-      const scaleFactor = Math.max(
-        0.2,
-        initialLogoResize.startScale + avgDelta / 150
-      );
-      setLogoScale(scaleFactor);
     }
 
     if (resizingProductId && initialResizeState) {
@@ -859,9 +742,6 @@ export default function BrochureEditor({
     setInitialResizeState(null);
     setIsDraggingDate(null);
     setDateDragStart(null);
-    setIsRotatingLogo(false);
-    setIsResizingLogo(false);
-    setInitialLogoResize(null);
   };
 
   const handleCreateCampaign = () => {
@@ -989,7 +869,6 @@ export default function BrochureEditor({
         startDate: startDate?.toISOString() || null,
         endDate: endDate?.toISOString() || null,
         templateId: firstAvailableTemplateId,
-        logoId: selectedLogoId,
         pageCount: pages, // Include page count
       };
 
@@ -1434,61 +1313,6 @@ export default function BrochureEditor({
                       {showCompanyName ? "Visible" : "Hidden"}
                     </button>
                   </div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Logo
-                  </label>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Select
-                      value={(selectedLogoId ?? "").toString()}
-                      onValueChange={handleLogoSelect}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Choose logo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {logos?.map((l) => (
-                          <SelectItem key={l.id} value={l.id.toString()}>
-                            {l.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value={"-1"}>Hide Logo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsLogoSelectOpen(true)}
-                    >
-                      Upload
-                    </Button>
-                  </div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Banner Text
-                  </label>
-                  <Input
-                    value={bannerText}
-                    onChange={(e) => setBannerText(e.target.value)}
-                  />
-                </div>
-                {/* Header right phone block */}
-                <div className="border rounded-lg p-3">
-                  <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                    Header Phone Area
-                  </h5>
-                  <label className="block text-xs text-gray-600 mb-1">
-                    Text
-                  </label>
-                  <Input
-                    value={headerPhoneText}
-                    onChange={(e) => setHeaderPhoneText(e.target.value)}
-                  />
-                  <label className="block text-xs text-gray-600 mt-2 mb-1">
-                    Phone Number
-                  </label>
-                  <Input
-                    value={headerPhoneNumber}
-                    onChange={(e) => setHeaderPhoneNumber(e.target.value)}
-                  />
                 </div>
                 {/* Footer content settings */}
                 <div className="border rounded-lg p-3">
@@ -1628,7 +1452,6 @@ export default function BrochureEditor({
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                     onClick={() => {
-                      setIsLogoSelected(false);
                       setSelectedProductIdForControls(null);
                     }}
                     onDragOver={(e) => {
@@ -1661,36 +1484,6 @@ export default function BrochureEditor({
                             borderTopRightRadius: "20px",
                           }}
                         />
-                        {/* Banner strip */}
-                        <div
-                          className="absolute left-0"
-                          style={{
-                            top: 120,
-                            height: 44,
-                            width: "100%",
-                            background: bannerBgColor,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <span
-                            className="font-black tracking-wide"
-                            style={{ color: bannerTextColor }}
-                          >
-                            {bannerText}
-                          </span>
-                          {/* Header right: phone area */}
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/20 px-2 py-1 rounded">
-                            <Phone className="w-4 h-4 text-white" />
-                            <span className="text-xs text-white whitespace-nowrap">
-                              {headerPhoneText}
-                            </span>
-                            <span className="text-sm font-bold text-white whitespace-nowrap">
-                              {headerPhoneNumber}
-                            </span>
-                          </div>
-                        </div>
                         {/* Footer strip */}
                         <div
                           className="absolute left-0 bottom-0 w-full"
@@ -1722,93 +1515,6 @@ export default function BrochureEditor({
                           </div>
                         </div>
                       </>
-                    )}
-
-                    {/* FIXED: Interactive Company Logo - Only show if not explicitly removed */}
-                    {selectedLogoId !== -1 && (
-                      <div
-                        className="absolute draggable-element cursor-move user-select-none z-40 group"
-                        style={{
-                          left: elementPositions.logo.x,
-                          top: elementPositions.logo.y,
-                        }}
-                        onMouseDown={(e) => {
-                          handleMouseDown("logo", e);
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsLogoSelected(true);
-                          setSelectedProductIdForControls(null);
-                        }}
-                      >
-                        <div
-                          className="bg-white rounded-lg flex items-center justify-center shadow-lg overflow-hidden relative"
-                          style={{
-                            width: `${64 * logoScale}px`,
-                            height: `${64 * logoScale}px`,
-                            transform: `rotate(${logoRotation}deg)`,
-                          }}
-                        >
-                          {selectedLogo ? (
-                            <>
-                              <img
-                                src={
-                                  selectedLogo.filePath
-                                    ? selectedLogo.filePath.startsWith(
-                                        "/public/assets/"
-                                      ) ||
-                                      selectedLogo.filePath.startsWith(
-                                        "public/assets/"
-                                      )
-                                      ? selectedLogo.filePath.startsWith("/")
-                                        ? selectedLogo.filePath
-                                        : `/${selectedLogo.filePath}`
-                                      : `/uploads/${selectedLogo.filePath}`
-                                    : ""
-                                }
-                                alt="Company Logo"
-                                className="w-full h-full object-contain rounded-lg"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                  (
-                                    e.target as HTMLImageElement
-                                  ).nextElementSibling?.removeAttribute(
-                                    "style"
-                                  );
-                                }}
-                              />
-                              {/* Remove logo button */}
-                              <button
-                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setIsLogoSelectOpen(true); // Open selection dialog instead of just removing
-                                }}
-                                data-edit-control="true"
-                              >
-                                ×
-                              </button>
-                              {/* Logo controls overlay removed; use Transform panel instead */}
-                            </>
-                          ) : (
-                            <div
-                              className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
-                              onClick={() => {
-                                setIsLogoSelectOpen(true);
-                                setIsLogoSelected(true);
-                              }}
-                            >
-                              <Building className="w-8 h-8 text-gray-400" />
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black bg-opacity-50 rounded-lg transition-opacity">
-                                <span className="text-white text-xs">
-                                  Click to add logo
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
                     )}
 
                     {/* Company Name */}
@@ -1986,7 +1692,6 @@ export default function BrochureEditor({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedProductIdForControls(item.id);
-                                setIsLogoSelected(false);
                               }}
                             >
                               {item.product.imageUrl ? (
@@ -2174,7 +1879,7 @@ export default function BrochureEditor({
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">
                   Transform
                 </h4>
-                {isLogoSelected || selectedProductIdForControls ? (
+                {selectedProductIdForControls ? (
                   <>
                     <div className="mb-4">
                       <label className="block text-xs font-medium text-gray-600 mb-2">
@@ -2188,23 +1893,17 @@ export default function BrochureEditor({
                           step={1}
                           className="flex-1"
                           value={
-                            isLogoSelected
-                              ? logoRotation || 0
-                              : productRotations[
-                                  selectedProductIdForControls || 0
-                                ] || 0
+                            productRotations[
+                              selectedProductIdForControls || 0
+                            ] || 0
                           }
                           onChange={(e) => {
                             const val = parseInt(e.target.value);
-                            if (isLogoSelected) {
-                              setLogoRotation(val);
-                            } else {
-                              if (selectedProductIdForControls != null) {
-                                setProductRotations((prev) => ({
-                                  ...prev,
-                                  [selectedProductIdForControls]: val,
-                                }));
-                              }
+                            if (selectedProductIdForControls != null) {
+                              setProductRotations((prev) => ({
+                                ...prev,
+                                [selectedProductIdForControls]: val,
+                              }));
                             }
                           }}
                         />
@@ -2212,23 +1911,17 @@ export default function BrochureEditor({
                           type="number"
                           className="w-16 border rounded px-1 py-1 text-sm"
                           value={
-                            isLogoSelected
-                              ? logoRotation || 0
-                              : productRotations[
-                                  selectedProductIdForControls || 0
-                                ] || 0
+                            productRotations[
+                              selectedProductIdForControls || 0
+                            ] || 0
                           }
                           onChange={(e) => {
                             const val = parseInt(e.target.value || "0");
-                            if (isLogoSelected) {
-                              setLogoRotation(val);
-                            } else {
-                              if (selectedProductIdForControls != null) {
-                                setProductRotations((prev) => ({
-                                  ...prev,
-                                  [selectedProductIdForControls]: val,
-                                }));
-                              }
+                            if (selectedProductIdForControls != null) {
+                              setProductRotations((prev) => ({
+                                ...prev,
+                                [selectedProductIdForControls]: val,
+                              }));
                             }
                           }}
                         />
@@ -2246,25 +1939,19 @@ export default function BrochureEditor({
                           step={0.01}
                           className="flex-1"
                           value={
-                            isLogoSelected
-                              ? logoScale || 1
-                              : productScales[selectedProductIdForControls || 0]
-                                  ?.scaleX || DEFAULT_PRODUCT_SCALE
+                            productScales[selectedProductIdForControls || 0]
+                              ?.scaleX || DEFAULT_PRODUCT_SCALE
                           }
                           onChange={(e) => {
                             const val = parseFloat(e.target.value);
-                            if (isLogoSelected) {
-                              setLogoScale(val);
-                            } else {
-                              if (selectedProductIdForControls != null) {
-                                setProductScales((prev) => ({
-                                  ...prev,
-                                  [selectedProductIdForControls]: {
-                                    scaleX: val,
-                                    scaleY: val,
-                                  },
-                                }));
-                              }
+                            if (selectedProductIdForControls != null) {
+                              setProductScales((prev) => ({
+                                ...prev,
+                                [selectedProductIdForControls]: {
+                                  scaleX: val,
+                                  scaleY: val,
+                                },
+                              }));
                             }
                           }}
                         />
@@ -2275,25 +1962,19 @@ export default function BrochureEditor({
                           min={0.2}
                           max={2}
                           value={
-                            isLogoSelected
-                              ? logoScale || 1
-                              : productScales[selectedProductIdForControls || 0]
-                                  ?.scaleX || DEFAULT_PRODUCT_SCALE
+                            productScales[selectedProductIdForControls || 0]
+                              ?.scaleX || DEFAULT_PRODUCT_SCALE
                           }
                           onChange={(e) => {
                             const val = parseFloat(e.target.value || "1");
-                            if (isLogoSelected) {
-                              setLogoScale(val);
-                            } else {
-                              if (selectedProductIdForControls != null) {
-                                setProductScales((prev) => ({
-                                  ...prev,
-                                  [selectedProductIdForControls]: {
-                                    scaleX: val,
-                                    scaleY: val,
-                                  },
-                                }));
-                              }
+                            if (selectedProductIdForControls != null) {
+                              setProductScales((prev) => ({
+                                ...prev,
+                                [selectedProductIdForControls]: {
+                                  scaleX: val,
+                                  scaleY: val,
+                                },
+                              }));
                             }
                           }}
                         />
@@ -2366,28 +2047,6 @@ export default function BrochureEditor({
                     Colors
                   </h5>
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Banner Color
-                      </label>
-                      <input
-                        type="color"
-                        value={bannerBgColor}
-                        onChange={(e) => setBannerBgColor(e.target.value)}
-                        className="h-9 w-16 p-1 border rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Banner Text Color
-                      </label>
-                      <input
-                        type="color"
-                        value={bannerTextColor}
-                        onChange={(e) => setBannerTextColor(e.target.value)}
-                        className="h-9 w-16 p-1 border rounded"
-                      />
-                    </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Footer Color
@@ -2491,119 +2150,6 @@ export default function BrochureEditor({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Logo Selection Dialog */}
-      <Dialog open={isLogoSelectOpen} onOpenChange={setIsLogoSelectOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Logo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Upload new logo option */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-              <button
-                onClick={() =>
-                  document.getElementById("logo-upload-input")?.click()
-                }
-                className="w-full text-gray-600 hover:text-gray-800"
-              >
-                <Upload className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-sm font-medium">Upload New Logo</p>
-              </button>
-            </div>
-
-            {/* Existing logos grid */}
-            {logos && logos.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Choose from existing logos:
-                </h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {logos.map((logo) => (
-                    <button
-                      key={logo.id}
-                      onClick={() => {
-                        setSelectedLogoId(logo.id);
-                        setIsLogoSelectOpen(false);
-                      }}
-                      className="aspect-square border rounded-lg p-2 hover:border-blue-500 transition-colors"
-                    >
-                      <img
-                        src={
-                          logo.filePath
-                            ? logo.filePath.startsWith("/public/assets/") ||
-                              logo.filePath.startsWith("public/assets/")
-                              ? logo.filePath.startsWith("/")
-                                ? logo.filePath
-                                : `/${logo.filePath}`
-                              : `/uploads/${logo.filePath}`
-                            : ""
-                        }
-                        alt={logo.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Remove logo option */}
-            <div className="pt-2 border-t">
-              <button
-                onClick={() => {
-                  setSelectedLogoId(-1); // Use -1 to indicate completely removed
-                  setIsLogoSelectOpen(false);
-                }}
-                className="w-full text-left text-red-600 hover:text-red-800 text-sm"
-              >
-                Remove logo area entirely
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Hidden logo upload input */}
-      <input
-        id="logo-upload-input"
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          if (!file || !user?.id) return;
-
-          const formData = new FormData();
-          formData.append("file", file); // FIXED: Use 'file' field name to match server
-          formData.append("name", file.name);
-          formData.append("userId", user.id.toString());
-
-          try {
-            const response = await fetch("/api/logos", {
-              method: "POST",
-              body: formData,
-            });
-
-            if (response.ok) {
-              const newLogo = await response.json();
-              setSelectedLogoId(newLogo.id);
-              setIsLogoSelectOpen(false);
-              queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
-              toast({
-                title: "Logo uploaded successfully",
-                description: "Your logo has been added to the brochure.",
-              });
-            }
-          } catch (error) {
-            toast({
-              title: "Upload failed",
-              description: "Could not upload logo. Please try again.",
-              variant: "destructive",
-            });
-          }
-        }}
-      />
     </div>
   );
 }
