@@ -81,7 +81,7 @@ export default function BrochureEditor({
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
-  const [companyName, setCompanyName] = useState("Your Company Name");
+  const [companyName, setCompanyName] = useState(user?.username || "Your Company Name");
   const [showCompanyName, setShowCompanyName] = useState(true);
   const [isEditingCompanyName, setIsEditingCompanyName] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
@@ -103,16 +103,16 @@ export default function BrochureEditor({
     useState<number | null>(null);
   // Style & template controls
   const [showSupermarketTemplate, setShowSupermarketTemplate] = useState(true);
-  const [footerBgColor, setFooterBgColor] = useState<string>("#e2b474");
-  const [titleColor, setTitleColor] = useState<string>("#a281fe"); // purple
+  const [footerBgColor, setFooterBgColor] = useState<string>(DEFAULT_BACKGROUND_COLOR);
+  const [titleColor, setTitleColor] = useState<string>("#ffffff"); // white
   const [titleFont, setTitleFont] = useState<string>(
-    "'Bebas Neue', 'Montserrat', 'Arial Black', sans-serif"
+    "'Anton', 'Gotham', 'TT Fors', 'Bebas Neue', 'Montserrat', 'Arial Black', sans-serif"
   );
   const [pages, setPages] = useState<number>(initialPages);
   // Instagram format selection: "4:5" (1080x1350) or "1:1" (1080x1080)
   const [instagramFormat, setInstagramFormat] = useState<"4:5" | "1:1">("4:5");
   const [elementPositions, setElementPositions] = useState({
-    companyName: { x: 112, y: 32 },
+    companyName: { x: 16, y: 16 },
     dateRange: { x: 450, y: 32 },
   });
   const [productPositions, setProductPositions] = useState<
@@ -178,12 +178,12 @@ export default function BrochureEditor({
     if (campaign) {
       setCampaignName(campaign.name || "");
       setCampaignDescription(campaign.description || "");
-      setCompanyName(campaign.companyName || "Your Company Name");
+      setCompanyName(campaign.companyName || user?.username || "Your Company Name");
       setSelectedTemplateId(campaign.templateId || null);
       if (campaign.startDate) setStartDate(new Date(campaign.startDate));
       if (campaign.endDate) setEndDate(new Date(campaign.endDate));
     }
-  }, [campaign]);
+  }, [campaign, user]);
 
   // Get canvas dimensions based on Instagram format
   const getCanvasDimensions = () => {
@@ -1537,12 +1537,12 @@ export default function BrochureEditor({
                             onChange={(e) => setCompanyName(e.target.value)}
                             onBlur={() => setIsEditingCompanyName(false)}
                             autoFocus
-                            className="px-2 py-1 rounded-md border border-gray-300 bg-white/90 font-black text-3xl"
+                            className="px-2 py-1 rounded-md border border-gray-300 bg-white/90 font-black text-4xl"
                             style={{ color: titleColor, fontFamily: titleFont }}
                           />
                         ) : (
                           <h1
-                            className="supermarket-title text-3xl font-black drop-shadow-lg"
+                            className="supermarket-title text-4xl font-black drop-shadow-lg"
                             style={{ color: titleColor, fontFamily: titleFont }}
                           >
                             {companyName}
