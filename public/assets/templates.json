@@ -3,56 +3,56 @@
     "id": 2,
     "name": "Şok template",
     "description": null,
-    "filePath": "fdd208aed92e1fc3992d2230863bbe79",
+    "filePath": "bb39895432c392146d9fede0fe3866cf",
     "userId": 1,
-    "createdAt": "2025-11-21T05:22:54.433Z"
+    "createdAt": "2025-11-26T10:58:39.613Z"
   },
   {
     "id": 3,
-    "name": "a101 template",
+    "name": "BIM1",
     "description": null,
-    "filePath": "3848eb77265c3de1afce00dc51daa254",
+    "filePath": "ff821562654f4f1e171010c8a79a6391",
     "userId": 1,
-    "createdAt": "2025-11-21T05:23:06.098Z"
-  },
-  {
-    "id": 2,
-    "name": "BIM MAVI",
-    "description": null,
-    "filePath": "7c5b26b1f68c82269d39638cfb5af71b",
-    "userId": 1,
-    "createdAt": "2025-11-25T08:30:09.609Z"
-  },
-  {
-    "id": 3,
-    "name": "BIM SARI",
-    "description": null,
-    "filePath": "f2f4af6e3d51b1eef1a617350effeb6b",
-    "userId": 1,
-    "createdAt": "2025-11-25T08:30:53.680Z"
+    "createdAt": "2025-11-26T10:58:52.681Z"
   },
   {
     "id": 4,
-    "name": "BIM TURUNCU",
+    "name": "BIM YEŞİL",
     "description": null,
-    "filePath": "0381c4e9449c744becde2fd5b93fa891",
+    "filePath": "9ec8feda42bc0f10bbaddbdadca7dd50",
     "userId": 1,
-    "createdAt": "2025-11-25T08:31:03.383Z"
+    "createdAt": "2025-11-26T10:59:02.164Z"
   },
   {
     "id": 5,
-    "name": "BIM YEŞİL",
+    "name": "BIM1",
     "description": null,
-    "filePath": "2a1c61378dfbeccc729d187e8f5750c0",
+    "filePath": "1bc99e9aeb5e8f0f9e46fd96fa987a5f",
     "userId": 1,
-    "createdAt": "2025-11-25T08:31:13.972Z"
+    "createdAt": "2025-11-26T10:59:20.991Z"
   },
   {
     "id": 6,
-    "name": "BIM1",
+    "name": "BIM TURUNCU",
     "description": null,
-    "filePath": "e66f05b6bdce2a6a3d321cef56d3467b",
+    "filePath": "67beb909a164f0ce238b7eceb9d72862",
     "userId": 1,
-    "createdAt": "2025-11-25T08:31:30.225Z"
+    "createdAt": "2025-11-26T11:29:42.427Z"
+  },
+  {
+    "id": 7,
+    "name": "BIM SARI",
+    "description": null,
+    "filePath": "8c1d662c663d0f919e3e21d95463ba32",
+    "userId": 1,
+    "createdAt": "2025-11-26T11:29:54.335Z"
+  },
+  {
+    "id": 8,
+    "name": "BIM MAVI",
+    "description": null,
+    "filePath": "6bc44a7dddf34d9ada2cb355e948a0f2",
+    "userId": 1,
+    "createdAt": "2025-11-26T11:30:02.452Z"
   }
 ]

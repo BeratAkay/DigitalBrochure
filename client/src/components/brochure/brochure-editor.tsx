@@ -42,6 +42,7 @@ import {
   Twitter,
 } from "lucide-react";
 import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -62,6 +63,9 @@ interface BrochureEditorProps {
   isDesignMode?: boolean;
   initialPages?: number;
   pageTemplates?: Record<number, number | null>;
+  initialStartDate?: Date;
+  initialEndDate?: Date;
+  onDateChange?: (startDate: Date | undefined, endDate: Date | undefined) => void;
 }
 
 export default function BrochureEditor({
@@ -72,6 +76,9 @@ export default function BrochureEditor({
   isDesignMode = false,
   initialPages = 1,
   pageTemplates = {},
+  initialStartDate,
+  initialEndDate,
+  onDateChange,
 }: BrochureEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -184,6 +191,25 @@ export default function BrochureEditor({
       if (campaign.endDate) setEndDate(new Date(campaign.endDate));
     }
   }, [campaign, user]);
+
+  // Initialize dates from props
+  useEffect(() => {
+    if (initialStartDate) {
+      setStartDate(initialStartDate);
+    }
+    if (initialEndDate) {
+      setEndDate(initialEndDate);
+    }
+  }, [initialStartDate, initialEndDate]);
+
+  // Notify parent of date changes
+  const handleDateChange = (newStartDate: Date | undefined, newEndDate: Date | undefined) => {
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    if (onDateChange) {
+      onDateChange(newStartDate, newEndDate);
+    }
+  };
 
   // Get canvas dimensions based on Instagram format
   const getCanvasDimensions = () => {
@@ -475,9 +501,10 @@ export default function BrochureEditor({
   // Initialize default date positions for each page
   useEffect(() => {
     const newDatePositions: Record<number, { x: number; y: number }> = {};
+    const canvasDims = getCanvasDimensions();
     for (let i = 1; i <= pages; i++) {
       if (!datePositions[i]) {
-        newDatePositions[i] = { x: 320, y: 20 }; // Default position: top-right area
+        newDatePositions[i] = { x: canvasDims.width - 140, y: 8 }; // Top-right corner
       }
     }
     if (Object.keys(newDatePositions).length > 0) {
@@ -1551,13 +1578,13 @@ export default function BrochureEditor({
                       </div>
                     )}
 
-                    {/* FIXED: Draggable Date Display on each page */}
-                    {startDate && endDate && (
+                    {/* Campaign Date Badge - Red styled badge in top-right */}
+                    {startDate && (
                       <div
-                        className="absolute cursor-move user-select-none z-20 bg-white/90 px-3 py-1 rounded-md shadow-md text-sm font-medium text-gray-800 border border-gray-200"
+                        className="absolute cursor-move user-select-none z-20"
                         style={{
-                          left: datePositions[pageNumber]?.x || 320,
-                          top: datePositions[pageNumber]?.y || 20,
+                          left: datePositions[pageNumber]?.x ?? (getCanvasDimensions().width - 140),
+                          top: datePositions[pageNumber]?.y ?? 8,
                         }}
                         onMouseDown={(e) => {
                           setIsDraggingDate(pageNumber);
@@ -1568,11 +1595,22 @@ export default function BrochureEditor({
                           });
                           e.preventDefault();
                         }}
-                        data-edit-control="true"
+                        data-testid={`date-badge-page-${pageNumber}`}
                       >
-                        <CalendarIcon className="inline w-3 h-3 mr-1" />
-                        {format(startDate, "MMM dd")} -{" "}
-                        {format(endDate, "MMM dd, yyyy")}
+                        <div 
+                          className="inline-flex flex-col items-center px-3 py-2 rounded-md shadow-lg"
+                          style={{ backgroundColor: '#E31E24' }}
+                        >
+                          <span className="text-white font-bold text-base tracking-wide leading-tight uppercase">
+                            {endDate
+                              ? `${format(startDate, "d", { locale: tr })}-${format(endDate, "d MMMM", { locale: tr })}`
+                              : format(startDate, "d MMMM", { locale: tr })
+                            }
+                          </span>
+                          <span className="text-white text-xs leading-tight capitalize">
+                            {format(startDate, "EEEE", { locale: tr })}
+                          </span>
+                        </div>
                       </div>
                     )}
 
@@ -1986,6 +2024,98 @@ export default function BrochureEditor({
                     Select a product to edit rotation and scale.
                   </p>
                 )}
+              </div>
+              <hr className="my-4" />
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                Kampanya Tarihi
+              </h4>
+              <div className="space-y-3">
+                <div className="border rounded-lg p-3">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Başlangıç Tarihi
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                            size="sm"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {startDate ? format(startDate, "d MMMM yyyy", { locale: tr }) : "Tarih seçin"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={(date) => handleDateChange(date, endDate)}
+                            locale={tr}
+                            data-testid="calendar-start-date-edit"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Bitiş Tarihi (Opsiyonel)
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                            size="sm"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {endDate ? format(endDate, "d MMMM yyyy", { locale: tr }) : "Tarih aralığı için"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={endDate}
+                            onSelect={(date) => handleDateChange(startDate, date)}
+                            locale={tr}
+                            disabled={(date) => startDate ? date < startDate : false}
+                            data-testid="calendar-end-date-edit"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {endDate && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full mt-1 text-xs text-gray-500"
+                          onClick={() => handleDateChange(startDate, undefined)}
+                        >
+                          Bitiş tarihini kaldır
+                        </Button>
+                      )}
+                    </div>
+                    {startDate && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded">
+                        <p className="text-xs text-gray-500 mb-1">Önizleme:</p>
+                        <div 
+                          className="inline-flex flex-col items-center px-2 py-1 rounded"
+                          style={{ backgroundColor: '#E31E24' }}
+                        >
+                          <span className="text-white font-bold text-sm uppercase">
+                            {endDate
+                              ? `${format(startDate, "d", { locale: tr })}-${format(endDate, "d MMMM", { locale: tr })}`
+                              : format(startDate, "d MMMM", { locale: tr })
+                            }
+                          </span>
+                          <span className="text-white text-xs capitalize">
+                            {format(startDate, "EEEE", { locale: tr })}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
               <hr className="my-4" />
               <h4 className="text-sm font-semibold text-gray-900 mb-3">

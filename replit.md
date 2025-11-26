@@ -121,6 +121,14 @@ The application follows a monorepo structure with separate client and server dir
 
 ## Recent Changes: Latest modifications with dates
 
+### November 26, 2025 - Campaign Date Selection Feature
+- **New Date Step**: Added dedicated "Date" step in creation workflow between Templates and Design
+- **Turkish Date Formatting**: All dates display in Turkish locale (e.g., "27 KASIM", "22-27 KASIM")
+- **Date Range Support**: Users can select single dates or date ranges for campaigns
+- **Visual Date Badge**: Red badge (#E31E24) displays campaign dates in top-right corner of brochures
+- **Design Section Controls**: Date can be edited in Design sidebar with calendar pickers and live preview
+- **Date Sync**: Two-way date synchronization between create-campaign.tsx and brochure-editor.tsx via callbacks
+
 ### November 25, 2025 - Simplified Brochure Editor
 - **Removed Phone Elements**: All phone number display and header phone area elements completely removed
 - **Removed Banner Elements**: Banner upload, positioning, and customization features removed

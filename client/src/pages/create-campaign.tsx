@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import ProductSearch from "@/components/products/product-search";
 import SelectedProducts from "@/components/products/selected-products";
 import BrochureEditor from "@/components/brochure/brochure-editor";
@@ -29,10 +32,13 @@ import {
   ArrowRight,
   CheckCircle,
   Package,
+  CalendarIcon,
 } from "lucide-react";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 import type { Product, CampaignProduct, Template } from "@shared/schema";
 
-type CreationStep = "products" | "pages" | "templates" | "editor";
+type CreationStep = "products" | "pages" | "templates" | "date" | "editor";
 
 export default function CreateCampaign() {
   const { user } = useAuth();
@@ -51,6 +57,11 @@ export default function CreateCampaign() {
   const [pageTemplates, setPageTemplates] = useState<
     Record<number, number | null>
   >({});
+  
+  // Date selection state
+  const [dateType, setDateType] = useState<"single" | "range">("single");
+  const [campaignStartDate, setCampaignStartDate] = useState<Date | undefined>(undefined);
+  const [campaignEndDate, setCampaignEndDate] = useState<Date | undefined>(undefined);
 
   // Check if we're editing an existing campaign
   const urlParams = new URLSearchParams(window.location.search);
@@ -173,27 +184,33 @@ export default function CreateCampaign() {
   const steps = [
     {
       id: "products",
-      name: "Products",
+      name: "Ürünler",
       icon: Package,
-      description: "Select products",
+      description: "Ürün seçin",
     },
     {
       id: "pages",
-      name: "Pages",
+      name: "Sayfalar",
       icon: FileText,
-      description: "Set page count",
+      description: "Sayfa sayısı",
     },
     {
       id: "templates",
-      name: "Templates",
+      name: "Şablonlar",
       icon: Layout,
-      description: "Choose templates",
+      description: "Şablon seçin",
+    },
+    {
+      id: "date",
+      name: "Tarih",
+      icon: CalendarIcon,
+      description: "Kampanya tarihi",
     },
     {
       id: "editor",
-      name: "Design",
+      name: "Tasarım",
       icon: CheckCircle,
-      description: "Arrange & finalize",
+      description: "Düzenle ve bitir",
     },
   ];
 
@@ -467,10 +484,124 @@ export default function CreateCampaign() {
                   onClick={() => setCreationStep("pages")}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back: Page Setup
+                  Geri: Sayfa Ayarları
                 </Button>
-                <Button onClick={handleProceedToEditor}>
-                  Start Designing
+                <Button onClick={() => setCreationStep("date")}>
+                  Sonraki: Tarih Seçimi
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case "date":
+        return (
+          <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CalendarIcon className="w-6 h-6" />
+                <span>Kampanya Tarihi Seçin</span>
+              </CardTitle>
+              <CardDescription>
+                Broşürde gösterilecek kampanya tarihini belirleyin. Tek bir gün veya tarih aralığı seçebilirsiniz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium mb-3 block">Tarih Tipi</Label>
+                  <RadioGroup
+                    value={dateType}
+                    onValueChange={(value: "single" | "range") => {
+                      setDateType(value);
+                      if (value === "single") {
+                        setCampaignEndDate(undefined);
+                      }
+                    }}
+                    className="flex gap-4"
+                    data-testid="radio-group-date-type"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="single" id="single" data-testid="radio-date-single" />
+                      <Label htmlFor="single" className="cursor-pointer">Tek Gün</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="range" id="range" data-testid="radio-date-range" />
+                      <Label htmlFor="range" className="cursor-pointer">Tarih Aralığı</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <Separator />
+
+                <div className="flex flex-col md:flex-row gap-8 justify-center">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">
+                      {dateType === "single" ? "Tarih" : "Başlangıç Tarihi"}
+                    </Label>
+                    <Calendar
+                      mode="single"
+                      selected={campaignStartDate}
+                      onSelect={setCampaignStartDate}
+                      locale={tr}
+                      className="rounded-md border"
+                      data-testid="calendar-start-date"
+                    />
+                  </div>
+
+                  {dateType === "range" && (
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Bitiş Tarihi</Label>
+                      <Calendar
+                        mode="single"
+                        selected={campaignEndDate}
+                        onSelect={setCampaignEndDate}
+                        locale={tr}
+                        className="rounded-md border"
+                        disabled={(date) => campaignStartDate ? date < campaignStartDate : false}
+                        data-testid="calendar-end-date"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {campaignStartDate && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Broşürde Görünecek Tarih</h4>
+                    <div className="flex justify-center">
+                      <div 
+                        className="inline-flex flex-col items-center px-4 py-2 rounded-md"
+                        style={{ backgroundColor: '#E31E24' }}
+                      >
+                        <span className="text-white font-bold text-lg tracking-wide uppercase">
+                          {dateType === "single" || !campaignEndDate
+                            ? format(campaignStartDate, "d MMMM", { locale: tr })
+                            : `${format(campaignStartDate, "d", { locale: tr })}-${format(campaignEndDate, "d MMMM", { locale: tr })}`
+                          }
+                        </span>
+                        <span className="text-white text-xs capitalize">
+                          {format(campaignStartDate, "EEEE", { locale: tr })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setCreationStep("templates")}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Geri: Şablonlar
+                </Button>
+                <Button 
+                  onClick={handleProceedToEditor}
+                  disabled={!campaignStartDate}
+                >
+                  Tasarıma Başla
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -518,6 +649,12 @@ export default function CreateCampaign() {
               isDesignMode={true}
               initialPages={pageCount}
               pageTemplates={pageTemplates}
+              initialStartDate={campaignStartDate}
+              initialEndDate={dateType === "range" ? campaignEndDate : undefined}
+              onDateChange={(start, end) => {
+                setCampaignStartDate(start);
+                setCampaignEndDate(end);
+              }}
             />
           </div>
         );
